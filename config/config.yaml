@@ -1,0 +1,14 @@
+app:
+  name: products-service
+  port: 8080
+
+database:
+  host: postgres
+  port: 5432
+  user: postgres
+  password: password
+  name: products_db
+  ssl_mode: disable
+
+logger:
+  level: debug
