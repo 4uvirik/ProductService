@@ -76,6 +76,18 @@ func (pg *Postgres) ProductGetByID(ctx context.Context, id int) (*entity.Product
 	return &p, nil
 }
 
+func (pg *Postgres) ProductUpdatePrice(ctx context.Context, id int, newPrice float64) error {
+	q := entity.QueryProductUpdatePrice
+	ct, err := pg.Pool.Exec(ctx, q, newPrice, id)
+	if err != nil {
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return ErrNoFound
+	}
+	return nil
+}
+
 func (pg *Postgres) ProductUpdate(ctx context.Context, p *entity.Product) error {
 	q := entity.QueryProductUpdate
 	ct, err := pg.Pool.Exec(ctx, q, p.Name, p.Price, p.CategoryID, p.ID)

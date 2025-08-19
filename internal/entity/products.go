@@ -3,7 +3,7 @@ package entity
 type Product struct {
 	ID         int
 	Name       string
-	CategoryID int
+	CategoryID *int
 	Price      float64
 }
 
