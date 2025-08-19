@@ -72,6 +72,12 @@ func LoadConfig(yamlPath string) (*Config, error) {
 	return config, nil
 }
 
+func (c *Config) DSN() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		c.Database.User, c.Database.Password, c.Database.Host, c.Database.Port, c.Database.Name,
+	)
+}
+
 func (cfg *Config) Validate() error {
 
 	var errorsMsg []string
