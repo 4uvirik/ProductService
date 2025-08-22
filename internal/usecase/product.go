@@ -20,6 +20,7 @@ func NewProductUseCase(oper repository.ProductOperations, logger *slog.Logger) *
 	return &ProductUseCase{oper: oper, logger: logger, validate: validator.New()}
 }
 
+// ProductCreate - метод создания нового продукта
 func (u *ProductUseCase) ProductCreate(ctx context.Context, p *entity.Product) error {
 	if err := u.validate.Struct(p); err != nil {
 		u.logger.Warn("validation failed for product create", sl.Err(err))
@@ -28,14 +29,17 @@ func (u *ProductUseCase) ProductCreate(ctx context.Context, p *entity.Product) e
 	return u.oper.Create(ctx, p)
 }
 
+// ProductGetAll - метод вывода всех продуктов
 func (u *ProductUseCase) ProductGetAll(ctx context.Context) ([]entity.Product, error) {
 	return u.oper.GetAll(ctx)
 }
 
+// ProductGetByID - метод вывода продукта по id
 func (u *ProductUseCase) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) {
 	return u.oper.GetByID(ctx, id)
 }
 
+// ProductUpdate - метод изменения одного или нескольких полей (название, цена, категория) продукта по id
 func (u *ProductUseCase) ProductUpdate(ctx context.Context, upd *entity.ProductUpdate) error {
 	if err := u.validate.Struct(upd); err != nil {
 		u.logger.Warn("validation failed for product update", sl.Err(err))
@@ -63,6 +67,7 @@ func (u *ProductUseCase) ProductUpdate(ctx context.Context, upd *entity.ProductU
 	return u.oper.Update(ctx, existing)
 }
 
+// ProductDelete - метод удаления продукта по id
 func (u *ProductUseCase) ProductDelete(ctx context.Context, id int) error {
 	if id <= 0 {
 		return pkg.ErrNoFound

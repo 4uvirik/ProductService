@@ -20,8 +20,7 @@ func NewCategoryUseCase(oper repository.CategoryOperations, logger *slog.Logger)
 	return &CategoryUseCase{oper: oper, logger: logger, validate: validator.New()}
 }
 
-// ---------- Category ----------
-
+// CategoryCreate - метод создания новой категории
 func (u *CategoryUseCase) CategoryCreate(ctx context.Context, c *entity.Category) error {
 	if err := u.validate.Struct(c); err != nil {
 		u.logger.Warn("validation failed for product create", sl.Err(err))
@@ -30,6 +29,7 @@ func (u *CategoryUseCase) CategoryCreate(ctx context.Context, c *entity.Category
 	return u.oper.Create(ctx, c)
 }
 
+// CategoryUpdate - метод изменения названия категории
 func (u *CategoryUseCase) CategoryUpdate(ctx context.Context, c *entity.Category) error {
 	if err := u.validate.Struct(c); err != nil {
 		u.logger.Warn("validation failed for product update", sl.Err(err))
@@ -38,6 +38,7 @@ func (u *CategoryUseCase) CategoryUpdate(ctx context.Context, c *entity.Category
 	return u.oper.Update(ctx, c)
 }
 
+// CategoryDelete - метод удаления категории по id
 func (u *CategoryUseCase) CategoryDelete(ctx context.Context, id int) error {
 	if id <= 0 {
 		return pkg.ErrNoFound

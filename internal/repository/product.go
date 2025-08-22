@@ -19,6 +19,7 @@ func NewProductRepository(db *pgxpool.Pool, logger *slog.Logger) *ProductReposit
 
 // ------------- Реализация ProductOperations --------------
 
+// ProductCreate - создает новый товар в базе данных. При успешном добавлении присваивает ID созданному объекту.
 func (r *ProductRepository) ProductCreate(ctx context.Context, p *entity.Product) error {
 	q := entity.QueryProductCreate
 	err := r.db.
@@ -30,6 +31,7 @@ func (r *ProductRepository) ProductCreate(ctx context.Context, p *entity.Product
 	return nil
 }
 
+// ProductGetAll - возвращает список всех товаров из базы данных.
 func (r *ProductRepository) ProductGetAll(ctx context.Context) ([]entity.Product, error) {
 	q := entity.QueryProductGetAll
 	rows, err := r.db.Query(ctx, q)
@@ -55,6 +57,7 @@ func (r *ProductRepository) ProductGetAll(ctx context.Context) ([]entity.Product
 	return allProducts, nil
 }
 
+// ProductGetByID - возвращает один товар из базы данных по его ID.
 func (r *ProductRepository) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) {
 	q := entity.QueryProductGetByID
 	var p entity.Product
@@ -67,6 +70,7 @@ func (r *ProductRepository) ProductGetByID(ctx context.Context, id int) (*entity
 	return &p, nil
 }
 
+// ProductUpdate - обновляет поля (имя, цена, категория) существующего товара в базе данных по id.
 func (r *ProductRepository) ProductUpdate(ctx context.Context, p *entity.Product) error {
 	q := entity.QueryProductUpdate
 	ct, err := r.db.Exec(ctx, q, p.Name, p.Price, p.CategoryID, p.ID)
@@ -80,6 +84,7 @@ func (r *ProductRepository) ProductUpdate(ctx context.Context, p *entity.Product
 	return nil
 }
 
+// ProductDelete - удаляет товар из базы данных по id.
 func (r *ProductRepository) ProductDelete(ctx context.Context, id int) error {
 	q := entity.QueryProductDelete
 	ct, err := r.db.Exec(ctx, q, id)

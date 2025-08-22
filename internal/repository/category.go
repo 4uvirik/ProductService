@@ -19,6 +19,7 @@ func NewCategoryRepository(db *pgxpool.Pool, logger *slog.Logger) *ProductReposi
 
 // ------------- Реализация CategoryOperations --------------
 
+// CategoryCreate - создает новую категорию в базе данных. При успешном добавлении присваивает ID созданному объекту.
 func (r *CategoryRepository) CategoryCreate(ctx context.Context, c *entity.Category) error {
 	q := entity.QueryCategoryCreate
 	err := r.db.
@@ -30,6 +31,7 @@ func (r *CategoryRepository) CategoryCreate(ctx context.Context, c *entity.Categ
 	return nil
 }
 
+// CategoryUpdate - обновляет название категории в базе данных по id.
 func (r *CategoryRepository) CategoryUpdate(ctx context.Context, c *entity.Category) error {
 	q := entity.QueryCategoryUpdate
 	ct, err := r.db.Exec(ctx, q, c.Name, c.ID)
@@ -43,6 +45,7 @@ func (r *CategoryRepository) CategoryUpdate(ctx context.Context, c *entity.Categ
 	return nil
 }
 
+// CategoryDelete - удаляет категорию из базы данных по id.
 func (r *CategoryRepository) CategoryDelete(ctx context.Context, id int) error {
 	q := entity.QueryCategoryDelete
 	ct, err := r.db.Exec(ctx, q, id)
