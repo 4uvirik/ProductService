@@ -2,118 +2,107 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"github.com/4uvirik/ProductService/internal/entity"
 	"github.com/4uvirik/ProductService/internal/repository"
-	"time"
+	"github.com/4uvirik/ProductService/pkg"
+	"github.com/4uvirik/ProductService/service/logger/sl"
+	"github.com/go-playground/validator/v10"
+	"log/slog"
 )
 
 type ProductUseCase struct {
-	oper    repository.ProductOperations
-	timeout time.Duration
+	oper     repository.ProductOperations
+	logger   *slog.Logger
+	validate *validator.Validate
 }
 
 type CategoryUseCase struct {
-	oper    repository.CategoryOperations
-	timeout time.Duration
+	oper     repository.CategoryOperations
+	logger   *slog.Logger
+	validate *validator.Validate
 }
 
-func NewProductUseCase(oper repository.ProductOperations, timeout time.Duration) *ProductUseCase {
-	return &ProductUseCase{oper: oper, timeout: timeout}
+func NewProductUseCase(oper repository.ProductOperations, logger *slog.Logger) *ProductUseCase {
+	return &ProductUseCase{oper: oper, logger: logger, validate: validator.New()}
 }
 
-func NewCategoryUseCase(oper repository.CategoryOperations, timeout time.Duration) *CategoryUseCase {
-	return &CategoryUseCase{oper: oper, timeout: timeout}
+func NewCategoryUseCase(oper repository.CategoryOperations, logger *slog.Logger) *CategoryUseCase {
+	return &CategoryUseCase{oper: oper, logger: logger, validate: validator.New()}
 }
 
 // ---------- Products ----------
 
 func (u *ProductUseCase) ProductCreate(ctx context.Context, p *entity.Product) error {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
-
-	if p.Name == "" {
-		return fmt.Errorf("name required")
-	}
-	if p.Price <= 0 {
-		return fmt.Errorf("price must be > 0")
-	}
-	if p.CategoryID == nil {
-		return fmt.Errorf("category required")
+	if err := u.validate.Struct(p); err != nil {
+		u.logger.Warn("validation failed for product create", sl.Err(err))
+		return err
 	}
 	return u.oper.Create(ctx, p)
 }
 
 func (u *ProductUseCase) ProductGetAll(ctx context.Context) ([]entity.Product, error) {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
 	return u.oper.GetAll(ctx)
 }
 
 func (u *ProductUseCase) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
 	return u.oper.GetByID(ctx, id)
 }
 
-func (u *ProductUseCase) ProductUpdatePrice(ctx context.Context, id int, newPrice float64) error {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
-	return u.oper.UpdatePrice(ctx, id, newPrice)
-}
+func (u *ProductUseCase) ProductUpdate(ctx context.Context, upd *entity.ProductUpdate) error {
+	if err := u.validate.Struct(upd); err != nil {
+		u.logger.Warn("validation failed for product update", sl.Err(err))
+		return err
+	}
 
-func (u *ProductUseCase) ProductUpdate(ctx context.Context, p *entity.Product) error {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
+	existing, err := u.oper.GetByID(ctx, int(upd.ID))
+	if err != nil {
+		u.logger.Error("failed to get product", sl.Err(err))
+		return err
+	}
 
-	if p.ID == 0 {
-		return fmt.Errorf("id required")
+	if upd.Name != nil {
+		existing.Name = *upd.Name
+		u.logger.Info("update name, new name", existing.Name)
 	}
-	if p.Name == "" {
-		return fmt.Errorf("name required")
+	if upd.Price != nil {
+		existing.Price = *upd.Price
+		u.logger.Info("update price, new price", existing.Price)
 	}
-	if p.Price <= 0 {
-		return fmt.Errorf("price must be > 0")
+	if upd.CategoryID != nil {
+		existing.CategoryID = upd.CategoryID
+		u.logger.Info("update category id, new category id", existing.CategoryID)
 	}
-	if p.CategoryID == nil {
-		return fmt.Errorf("category required")
-	}
-	return u.oper.Update(ctx, p)
+	return u.oper.Update(ctx, existing)
 }
 
 func (u *ProductUseCase) ProductDelete(ctx context.Context, id int) error {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
+	if id <= 0 {
+		return pkg.ErrNoFound
+	}
 	return u.oper.Delete(ctx, id)
 }
 
 // ---------- Category ----------
 
-func (u *CategoryUseCase) CategoryCreate(ctx context.Context, p *entity.Category) error {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
-
-	if p.Name == "" {
-		return fmt.Errorf("name required")
+func (u *CategoryUseCase) CategoryCreate(ctx context.Context, c *entity.Category) error {
+	if err := u.validate.Struct(c); err != nil {
+		u.logger.Warn("validation failed for product create", sl.Err(err))
+		return err
 	}
-	return u.oper.Create(ctx, p)
+	return u.oper.Create(ctx, c)
 }
 
-func (u *CategoryUseCase) CategoryUpdate(ctx context.Context, p *entity.Category) error {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
-
-	if p.ID == 0 {
-		return fmt.Errorf("id required")
+func (u *CategoryUseCase) CategoryUpdate(ctx context.Context, c *entity.Category) error {
+	if err := u.validate.Struct(c); err != nil {
+		u.logger.Warn("validation failed for product update", sl.Err(err))
+		return err
 	}
-	if p.Name == "" {
-		return fmt.Errorf("name required")
-	}
-	return u.oper.Update(ctx, p)
+	return u.oper.Update(ctx, c)
 }
 
 func (u *CategoryUseCase) CategoryDelete(ctx context.Context, id int) error {
-	ctx, cancel := context.WithTimeout(ctx, u.timeout)
-	defer cancel()
+	if id <= 0 {
+		return pkg.ErrNoFound
+	}
 	return u.oper.Delete(ctx, id)
 }

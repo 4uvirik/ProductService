@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/4uvirik/ProductService/config"
-	"github.com/4uvirik/ProductService/internal/logger"
+	"github.com/4uvirik/ProductService/service/logger"
 	"log"
 	"log/slog"
 	"os"

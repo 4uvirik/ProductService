@@ -2,16 +2,13 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/4uvirik/ProductService/internal/entity"
-	"github.com/4uvirik/ProductService/internal/logger/sl"
-	"github.com/jackc/pgx/v5"
+	"github.com/4uvirik/ProductService/pkg"
+	"github.com/4uvirik/ProductService/service/logger/sl"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 )
-
-var ErrNoFound = errors.New("no found")
 
 type Postgres struct {
 	Pool   *pgxpool.Pool
@@ -34,19 +31,33 @@ func NewPostgres(ctx context.Context, dsn string, logger *slog.Logger) (*Postgre
 	return &Postgres{Pool: pool, Logger: logger}, nil
 }
 
-// ------------- Реализация ProductOperations --------------
-
-func (pg *Postgres) ProductCreate(ctx context.Context, p *entity.Product) error {
-	q := entity.QueryProductCreate
-	return pg.Pool.
-		QueryRow(ctx, q, p.Name, p.Price, p.CategoryID).
-		Scan(&p.ID)
+type ProductRepository struct {
+	db     *pgxpool.Pool
+	logger *slog.Logger
 }
 
-func (pg *Postgres) ProductGetAll(ctx context.Context) ([]entity.Product, error) {
-	q := entity.QueryProductGetAll
-	rows, err := pg.Pool.Query(ctx, q)
+func NewProductRepository(db *pgxpool.Pool, logger *slog.Logger) *ProductRepository {
+	return &ProductRepository{db: db, logger: logger}
+}
+
+// ------------- Реализация ProductOperations --------------
+
+func (r *ProductRepository) ProductCreate(ctx context.Context, p *entity.Product) error {
+	q := entity.QueryProductCreate
+	err := r.db.
+		QueryRow(ctx, q, p.Name, p.Price, p.CategoryID).
+		Scan(&p.ID)
 	if err != nil {
+		r.logger.Error("failed to create product", slog.Any("err", err))
+	}
+	return nil
+}
+
+func (r *ProductRepository) ProductGetAll(ctx context.Context) ([]entity.Product, error) {
+	q := entity.QueryProductGetAll
+	rows, err := r.db.Query(ctx, q)
+	if err != nil {
+		r.logger.Error("failed to get all products", slog.Any("err", err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -55,92 +66,91 @@ func (pg *Postgres) ProductGetAll(ctx context.Context) ([]entity.Product, error)
 	for rows.Next() {
 		var p entity.Product
 		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.CategoryID); err != nil {
+			r.logger.Error("failed to scan product row", slog.Any("err", err))
 			return nil, err
 		}
 		allProducts = append(allProducts, p)
 	}
-	return allProducts, rows.Err()
+
+	if len(allProducts) == 0 {
+		return nil, pkg.ErrNoFound
+	}
+	return allProducts, nil
 }
 
-func (pg *Postgres) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) {
+func (r *ProductRepository) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) {
 	q := entity.QueryProductGetByID
 	var p entity.Product
-	err := pg.Pool.QueryRow(ctx, q, id).
+	err := r.db.QueryRow(ctx, q, id).
 		Scan(&p.ID, &p.Name, &p.Price, p.CategoryID)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNoFound
-		}
-		return nil, err
+		r.logger.Error("failed to get product by id", slog.Int("id", id), slog.Any("err", err))
+		return nil, pkg.ErrNoFound
 	}
 	return &p, nil
 }
 
-func (pg *Postgres) ProductUpdatePrice(ctx context.Context, id int, newPrice float64) error {
-	q := entity.QueryProductUpdatePrice
-	ct, err := pg.Pool.Exec(ctx, q, newPrice, id)
-	if err != nil {
-		return err
-	}
-	if ct.RowsAffected() == 0 {
-		return ErrNoFound
-	}
-	return nil
-}
-
-func (pg *Postgres) ProductUpdate(ctx context.Context, p *entity.Product) error {
+func (r *ProductRepository) ProductUpdate(ctx context.Context, p *entity.Product) error {
 	q := entity.QueryProductUpdate
-	ct, err := pg.Pool.Exec(ctx, q, p.Name, p.Price, p.CategoryID, p.ID)
+	ct, err := r.db.Exec(ctx, q, p.Name, p.Price, p.CategoryID, p.ID)
 	if err != nil {
+		r.logger.Error("failed to update product", slog.Int("id", p.ID), slog.Any("err", err))
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return ErrNoFound
+		return pkg.ErrNoFound
 	}
 	return nil
 }
 
-func (pg *Postgres) ProductDelete(ctx context.Context, id int) error {
+func (r *ProductRepository) ProductDelete(ctx context.Context, id int) error {
 	q := entity.QueryProductDelete
-	ct, err := pg.Pool.Exec(ctx, q, id)
+	ct, err := r.db.Exec(ctx, q, id)
 	if err != nil {
+		r.logger.Error("failed to delete product", slog.Int("id", id), slog.Any("err", err))
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return ErrNoFound
+		return pkg.ErrNoFound
 	}
 	return nil
 }
 
 // ------------- Реализация CategoryOperations --------------
 
-func (pg *Postgres) CategoryCreate(ctx context.Context, p *entity.Product) error {
+func (r *ProductRepository) CategoryCreate(ctx context.Context, c *entity.Category) error {
 	q := entity.QueryCategoryCreate
-	return pg.Pool.
-		QueryRow(ctx, q, p.Name).
-		Scan(&p.ID)
-}
-
-func (pg *Postgres) CategoryUpdate(ctx context.Context, p *entity.Product) error {
-	q := entity.QueryCategoryUpdate
-	ct, err := pg.Pool.Exec(ctx, q, p.Name, p.ID)
+	err := r.db.
+		QueryRow(ctx, q, c.Name).
+		Scan(&c.ID)
 	if err != nil {
-		return err
-	}
-	if ct.RowsAffected() == 0 {
-		return ErrNoFound
+		r.logger.Error("failed to create category", slog.Any("err", err))
 	}
 	return nil
 }
 
-func (pg *Postgres) CategoryDelete(ctx context.Context, id int) error {
-	q := entity.QueryCategoryDelete
-	ct, err := pg.Pool.Exec(ctx, q, id)
+func (r *ProductRepository) CategoryUpdate(ctx context.Context, c *entity.Category) error {
+	q := entity.QueryCategoryUpdate
+	ct, err := r.db.Exec(ctx, q, c.Name, c.ID)
 	if err != nil {
+		r.logger.Error("failed to update category", slog.Int("id", c.ID), slog.Any("err", err))
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return ErrNoFound
+		return pkg.ErrNoFound
+	}
+	return nil
+}
+
+func (r *ProductRepository) CategoryDelete(ctx context.Context, id int) error {
+	q := entity.QueryCategoryDelete
+	ct, err := r.db.Exec(ctx, q, id)
+	if err != nil {
+		r.logger.Error("failed to delete category", slog.Int("id", id), slog.Any("err", err))
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return pkg.ErrNoFound
 	}
 	return nil
 }

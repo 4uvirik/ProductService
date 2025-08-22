@@ -10,7 +10,6 @@ type ProductOperations interface {
 	Create(ctx context.Context, p *entity.Product) error
 	GetAll(ctx context.Context) ([]entity.Product, error)
 	GetByID(ctx context.Context, id int) (*entity.Product, error)
-	UpdatePrice(ctx context.Context, id int, newPrice float64) error
 	Update(ctx context.Context, p *entity.Product) error
 	Delete(ctx context.Context, id int) error
 }

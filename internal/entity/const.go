@@ -1,6 +1,7 @@
 package entity
 
 // ------ Константы для реализации методов ProductOperations ------
+
 const QueryProductCreate = `
 INSERT INTO products (name, price, category_id)
 VALUES ($1, $2, $3),
@@ -32,6 +33,7 @@ WHERE id = $1
 `
 
 // ------ Константы для реализации методов CategoryOperations ------
+
 const QueryCategoryCreate = `
 INSERT INTO category (name)
 VALUES ($1)
@@ -46,3 +48,8 @@ const QueryCategoryDelete = `
 DELETE FROM category 
 WHERE id = $1
 `
+
+// ------ Константы для URL ------
+
+const ProductURL = "/product"
+const IDParam = "/:id"
