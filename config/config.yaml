@@ -1,13 +1,14 @@
 app:
   name: products-service
+  host: 0.0.0.0
   port: 8080
 
 database:
-  host: postgres
+  host: localhost
   port: 5432
   user: postgres
-  password: password
-  name: products_db
+  password: postgres
+  name: postgres
   ssl_mode: disable
 
 logger:

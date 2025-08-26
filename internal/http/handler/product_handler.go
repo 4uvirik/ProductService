@@ -39,6 +39,7 @@ func (h *ProductHandler) RegisterProductRoutes(g *echo.Group) {
 func (h *ProductHandler) ProductCreate(c echo.Context) error {
 	var dto entity.ProductCreate
 	if err := c.Bind(&dto); err != nil {
+		h.logger.Error("bind error", slog.Any("err", err))
 		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid json"})
 	}
 

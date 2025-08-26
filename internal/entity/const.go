@@ -4,7 +4,7 @@ package entity
 
 const QueryProductCreate = `
 INSERT INTO products (name, price, category_id)
-VALUES ($1, $2, $3),
+VALUES ($1, $2, $3)
 RETURNING id;
 `
 const QueryProductGetAll = `

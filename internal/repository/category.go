@@ -12,8 +12,8 @@ type CategoryRepository struct {
 	logger *slog.Logger
 }
 
-func NewCategoryRepository(db *pgxpool.Pool, logger *slog.Logger) *ProductRepository {
-	return &ProductRepository{db: db, logger: logger}
+func NewCategoryRepository(db *pgxpool.Pool, logger *slog.Logger) *CategoryRepository {
+	return &CategoryRepository{db: db, logger: logger}
 }
 
 // CategoryCreate - создает новую категорию в базе данных. При успешном добавлении присваивает ID созданному объекту.

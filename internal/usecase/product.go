@@ -32,17 +32,17 @@ func (u *ProductUseCase) ProductCreate(ctx context.Context, dto entity.ProductCr
 		Price:      dto.Price,
 		CategoryID: dto.CategoryID,
 	}
-	return u.oper.Create(ctx, product)
+	return u.oper.ProductCreate(ctx, product)
 }
 
 // ProductGetAll - метод вывода всех продуктов
 func (u *ProductUseCase) ProductGetAll(ctx context.Context) ([]entity.Product, error) {
-	return u.oper.GetAll(ctx)
+	return u.oper.ProductGetAll(ctx)
 }
 
 // ProductGetByID - метод вывода продукта по id
 func (u *ProductUseCase) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) {
-	return u.oper.GetByID(ctx, id)
+	return u.oper.ProductGetByID(ctx, id)
 }
 
 // ProductUpdate - метод изменения одного или нескольких полей (название, цена, категория) продукта по id
@@ -56,7 +56,7 @@ func (u *ProductUseCase) ProductUpdate(ctx context.Context, dto *entity.ProductU
 		return entity.ErrNoFields
 	}
 
-	existing, err := u.oper.GetByID(ctx, int(dto.ID))
+	existing, err := u.oper.ProductGetByID(ctx, int(dto.ID))
 	if err != nil {
 		u.logger.Error("failed to get product", sl.Err(err))
 		return err
@@ -74,7 +74,7 @@ func (u *ProductUseCase) ProductUpdate(ctx context.Context, dto *entity.ProductU
 		existing.CategoryID = dto.CategoryID
 		u.logger.Info("update category id, new category id:", existing.CategoryID)
 	}
-	return u.oper.Update(ctx, existing)
+	return u.oper.ProductUpdate(ctx, existing)
 }
 
 // ProductDelete - метод удаления продукта по id
@@ -82,5 +82,5 @@ func (u *ProductUseCase) ProductDelete(ctx context.Context, id int) error {
 	if id <= 0 {
 		return entity.ErrNotFound
 	}
-	return u.oper.Delete(ctx, id)
+	return u.oper.ProductDelete(ctx, id)
 }

@@ -17,8 +17,8 @@ type CategoryHandler struct {
 	logger *slog.Logger
 }
 
-func NewCategoryHandler(uc *usecase.ProductUseCase, logger *slog.Logger) *ProductHandler {
-	return &ProductHandler{uc: uc, logger: logger}
+func NewCategoryHandler(uc *usecase.CategoryUseCase, logger *slog.Logger) *CategoryHandler {
+	return &CategoryHandler{uc: uc, logger: logger}
 }
 
 // RegisterCategoryRoutes - регистрирует маршруты для работы с категориями.
@@ -47,10 +47,16 @@ func (h *CategoryHandler) CategoryCreate(c echo.Context) error {
 
 // CategoryUpdate - обрабатывает PUT запрос на обновление названия категории продуктов. Декодирует тело запроса и обновляет продукт
 func (h *CategoryHandler) CategoryUpdate(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
+	}
+
 	var upd entity.Category
 	if err := json.NewDecoder(c.Request().Body).Decode(&upd); err != nil {
 		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid request body"})
 	}
+	upd.ID = id
 
 	if err := h.uc.CategoryUpdate(c.Request().Context(), &upd); err != nil {
 		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})

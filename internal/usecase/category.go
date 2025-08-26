@@ -26,7 +26,7 @@ func (u *CategoryUseCase) CategoryCreate(ctx context.Context, c *entity.Category
 		u.logger.Warn("validation failed for product create", sl.Err(err))
 		return err
 	}
-	return u.oper.Create(ctx, c)
+	return u.oper.CategoryCreate(ctx, c)
 }
 
 // CategoryUpdate - метод изменения названия категории
@@ -35,7 +35,7 @@ func (u *CategoryUseCase) CategoryUpdate(ctx context.Context, c *entity.Category
 		u.logger.Warn("validation failed for product update", sl.Err(err))
 		return err
 	}
-	return u.oper.Update(ctx, c)
+	return u.oper.CategoryUpdate(ctx, c)
 }
 
 // CategoryDelete - метод удаления категории по id
@@ -43,5 +43,5 @@ func (u *CategoryUseCase) CategoryDelete(ctx context.Context, id int) error {
 	if id <= 0 {
 		return entity.ErrNotFound
 	}
-	return u.oper.Delete(ctx, id)
+	return u.oper.CategoryDelete(ctx, id)
 }

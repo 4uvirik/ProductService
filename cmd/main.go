@@ -1,19 +1,25 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"github.com/4uvirik/ProductService/config"
+	"github.com/4uvirik/ProductService/internal/http/server"
+	"github.com/4uvirik/ProductService/internal/repository"
+	"github.com/4uvirik/ProductService/internal/usecase"
 	"github.com/4uvirik/ProductService/pkg/logger"
+	"github.com/joho/godotenv"
 	"log"
 	"log/slog"
 	"os"
 )
 
 func main() {
+	if err := godotenv.Load(".env"); err != nil {
+		fmt.Println(".env file not found")
+	}
 
 	yamlPath := os.Getenv("YAML_PATH")
-	if yamlPath == "" {
-		log.Fatal("YAML_PATH not found")
-	}
 
 	cfg, err := config.LoadConfig(yamlPath)
 	if err != nil {
@@ -30,5 +36,19 @@ func main() {
 	}
 
 	logger.Debug("configuration reading success", slog.Any("cfg", cfg))
+
+	p, err := repository.NewPostgres(context.Background(), cfg.DSN(), logger)
+	if err != nil {
+		log.Fatalf("error creating new repository: %v", err)
+	}
+	defer p.Pool.Close()
+
+	repoCategory := repository.NewCategoryRepository(p.Pool, logger)
+	repoProduct := repository.NewProductRepository(p.Pool, logger)
+
+	UCCategory := usecase.NewCategoryUseCase(repoCategory, logger)
+	UCProduct := usecase.NewProductUseCase(repoProduct, logger)
+
+	server.Run(cfg, UCCategory, UCProduct, logger)
 
 }

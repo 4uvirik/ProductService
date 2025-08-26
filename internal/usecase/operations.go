@@ -7,16 +7,16 @@ import (
 
 // ProductOperations - операции хранилища для Product
 type ProductOperations interface {
-	Create(ctx context.Context, p entity.Product) (*entity.Product, error)
-	GetAll(ctx context.Context) ([]entity.Product, error)
-	GetByID(ctx context.Context, id int) (*entity.Product, error)
-	Update(ctx context.Context, p *entity.Product) error
-	Delete(ctx context.Context, id int) error
+	ProductCreate(ctx context.Context, p entity.Product) (*entity.Product, error)
+	ProductGetAll(ctx context.Context) ([]entity.Product, error)
+	ProductGetByID(ctx context.Context, id int) (*entity.Product, error)
+	ProductUpdate(ctx context.Context, p *entity.Product) error
+	ProductDelete(ctx context.Context, id int) error
 }
 
 // CategoryOperations - операции хранилища для Category
 type CategoryOperations interface {
-	Create(ctx context.Context, p *entity.Category) error
-	Update(ctx context.Context, p *entity.Category) error
-	Delete(ctx context.Context, id int) error
+	CategoryCreate(ctx context.Context, p *entity.Category) error
+	CategoryUpdate(ctx context.Context, p *entity.Category) error
+	CategoryDelete(ctx context.Context, id int) error
 }

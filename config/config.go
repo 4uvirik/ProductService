@@ -18,6 +18,7 @@ type Config struct {
 
 type AppConfig struct {
 	Name string `yaml:"name" env:"APP_NAME"`
+	Host string `yaml:"host" env:"APP_HOST"`
 	Port string `yaml:"port" env:"APP_PORT"`
 }
 
@@ -83,6 +84,10 @@ func (cfg *Config) Validate() error {
 	var errorsMsg []string
 
 	if cfg.App.Name == "" {
+		errorsMsg = append(errorsMsg, "invalid app name")
+	}
+
+	if cfg.App.Host == "" {
 		errorsMsg = append(errorsMsg, "invalid app host")
 	}
 

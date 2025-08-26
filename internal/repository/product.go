@@ -59,7 +59,7 @@ func (r *ProductRepository) ProductGetByID(ctx context.Context, id int) (*entity
 	q := entity.QueryProductGetByID
 	var p entity.Product
 	err := r.db.QueryRow(ctx, q, id).
-		Scan(&p.ID, &p.Name, &p.Price, p.CategoryID)
+		Scan(&p.ID, &p.Name, &p.Price, &p.CategoryID)
 	if err != nil {
 		r.logger.Error("failed to get product by id", slog.Int("id", id), slog.Any("err", err))
 		return nil, entity.ErrNotFound
