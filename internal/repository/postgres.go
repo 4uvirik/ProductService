@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/4uvirik/ProductService/service/logger/sl"
+	"github.com/4uvirik/ProductService/pkg/logger/sl"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 )

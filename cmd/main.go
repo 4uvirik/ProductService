@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/4uvirik/ProductService/config"
-	"github.com/4uvirik/ProductService/service/logger"
+	"github.com/4uvirik/ProductService/pkg/logger"
 	"log"
 	"log/slog"
 	"os"
@@ -12,7 +12,7 @@ func main() {
 
 	yamlPath := os.Getenv("YAML_PATH")
 	if yamlPath == "" {
-		yamlPath = "config/config.yaml"
+		log.Fatal("YAML_PATH not found")
 	}
 
 	cfg, err := config.LoadConfig(yamlPath)

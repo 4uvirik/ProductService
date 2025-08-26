@@ -3,8 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"github.com/4uvirik/ProductService/internal/entity"
+	"github.com/4uvirik/ProductService/internal/http/httperr"
+	"github.com/4uvirik/ProductService/internal/http/response"
 	"github.com/4uvirik/ProductService/internal/usecase"
-	"github.com/4uvirik/ProductService/pkg"
 	"github.com/labstack/echo/v4"
 	"log/slog"
 	"net/http"
@@ -35,11 +36,11 @@ func (h *CategoryHandler) RegisterCategoryRoutes(g *echo.Group) {
 func (h *CategoryHandler) CategoryCreate(c echo.Context) error {
 	var req entity.Category
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: "invalid json"})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid json"})
 	}
 
 	if err := h.uc.CategoryCreate(c.Request().Context(), &req); err != nil {
-		return c.JSON(pkg.MapErrorToStatus(err), pkg.ErrorResponse{Error: err.Error()})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, req)
 }
@@ -48,24 +49,24 @@ func (h *CategoryHandler) CategoryCreate(c echo.Context) error {
 func (h *CategoryHandler) CategoryUpdate(c echo.Context) error {
 	var upd entity.Category
 	if err := json.NewDecoder(c.Request().Body).Decode(&upd); err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: "invalid request body"})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid request body"})
 	}
 
 	if err := h.uc.CategoryUpdate(c.Request().Context(), &upd); err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: err.Error()})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
-	return c.JSON(http.StatusOK, pkg.Response{Result: "updated"})
+	return c.JSON(http.StatusOK, response.Response{Result: "updated"})
 }
 
 // CategoryDelete - обрабатывает DELETE запрос на удаление категории продуктов по id
 func (h *CategoryHandler) CategoryDelete(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: "invalid id"})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
 	}
 
 	if err := h.uc.CategoryDelete(c.Request().Context(), id); err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: err.Error()})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
-	return c.JSON(http.StatusOK, pkg.Response{Result: "deleted"})
+	return c.JSON(http.StatusOK, response.Response{Result: "deleted"})
 }

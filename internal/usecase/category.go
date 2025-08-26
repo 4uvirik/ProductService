@@ -3,22 +3,22 @@ package usecase
 import (
 	"context"
 	"github.com/4uvirik/ProductService/internal/entity"
-	"github.com/4uvirik/ProductService/internal/repository"
-	"github.com/4uvirik/ProductService/pkg"
-	"github.com/4uvirik/ProductService/service/logger/sl"
+	"github.com/4uvirik/ProductService/pkg/logger/sl"
 	"github.com/go-playground/validator/v10"
 	"log/slog"
 )
 
 type CategoryUseCase struct {
-	oper     repository.CategoryOperations
+	oper     CategoryOperations
 	logger   *slog.Logger
 	validate *validator.Validate
 }
 
-func NewCategoryUseCase(oper repository.CategoryOperations, logger *slog.Logger) *CategoryUseCase {
+func NewCategoryUseCase(oper CategoryOperations, logger *slog.Logger) *CategoryUseCase {
 	return &CategoryUseCase{oper: oper, logger: logger, validate: validator.New()}
 }
+
+// ------------- Реализация CategoryOperations --------------
 
 // CategoryCreate - метод создания новой категории
 func (u *CategoryUseCase) CategoryCreate(ctx context.Context, c *entity.Category) error {
@@ -41,7 +41,7 @@ func (u *CategoryUseCase) CategoryUpdate(ctx context.Context, c *entity.Category
 // CategoryDelete - метод удаления категории по id
 func (u *CategoryUseCase) CategoryDelete(ctx context.Context, id int) error {
 	if id <= 0 {
-		return pkg.ErrNoFound
+		return entity.ErrNotFound
 	}
 	return u.oper.Delete(ctx, id)
 }

@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"github.com/4uvirik/ProductService/internal/entity"
-	"github.com/4uvirik/ProductService/pkg"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 )
@@ -17,10 +16,8 @@ func NewProductRepository(db *pgxpool.Pool, logger *slog.Logger) *ProductReposit
 	return &ProductRepository{db: db, logger: logger}
 }
 
-// ------------- Реализация ProductOperations --------------
-
 // ProductCreate - создает новый товар в базе данных. При успешном добавлении присваивает ID созданному объекту.
-func (r *ProductRepository) ProductCreate(ctx context.Context, p *entity.Product) error {
+func (r *ProductRepository) ProductCreate(ctx context.Context, p entity.Product) (*entity.Product, error) {
 	q := entity.QueryProductCreate
 	err := r.db.
 		QueryRow(ctx, q, p.Name, p.Price, p.CategoryID).
@@ -28,7 +25,7 @@ func (r *ProductRepository) ProductCreate(ctx context.Context, p *entity.Product
 	if err != nil {
 		r.logger.Error("failed to create product", slog.Any("err", err))
 	}
-	return nil
+	return &p, nil
 }
 
 // ProductGetAll - возвращает список всех товаров из базы данных.
@@ -52,7 +49,7 @@ func (r *ProductRepository) ProductGetAll(ctx context.Context) ([]entity.Product
 	}
 
 	if len(allProducts) == 0 {
-		return nil, pkg.ErrNoFound
+		return nil, entity.ErrNotFound
 	}
 	return allProducts, nil
 }
@@ -65,7 +62,7 @@ func (r *ProductRepository) ProductGetByID(ctx context.Context, id int) (*entity
 		Scan(&p.ID, &p.Name, &p.Price, p.CategoryID)
 	if err != nil {
 		r.logger.Error("failed to get product by id", slog.Int("id", id), slog.Any("err", err))
-		return nil, pkg.ErrNoFound
+		return nil, entity.ErrNotFound
 	}
 	return &p, nil
 }
@@ -79,7 +76,7 @@ func (r *ProductRepository) ProductUpdate(ctx context.Context, p *entity.Product
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return pkg.ErrNoFound
+		return entity.ErrNotFound
 	}
 	return nil
 }
@@ -93,7 +90,7 @@ func (r *ProductRepository) ProductDelete(ctx context.Context, id int) error {
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return pkg.ErrNoFound
+		return entity.ErrNotFound
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
-package repository
+package usecase
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 // ProductOperations - операции хранилища для Product
 type ProductOperations interface {
-	Create(ctx context.Context, p *entity.Product) error
+	Create(ctx context.Context, p entity.Product) (*entity.Product, error)
 	GetAll(ctx context.Context) ([]entity.Product, error)
 	GetByID(ctx context.Context, id int) (*entity.Product, error)
 	Update(ctx context.Context, p *entity.Product) error

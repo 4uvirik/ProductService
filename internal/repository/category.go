@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"github.com/4uvirik/ProductService/internal/entity"
-	"github.com/4uvirik/ProductService/pkg"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 )
@@ -16,8 +15,6 @@ type CategoryRepository struct {
 func NewCategoryRepository(db *pgxpool.Pool, logger *slog.Logger) *ProductRepository {
 	return &ProductRepository{db: db, logger: logger}
 }
-
-// ------------- Реализация CategoryOperations --------------
 
 // CategoryCreate - создает новую категорию в базе данных. При успешном добавлении присваивает ID созданному объекту.
 func (r *CategoryRepository) CategoryCreate(ctx context.Context, c *entity.Category) error {
@@ -40,7 +37,7 @@ func (r *CategoryRepository) CategoryUpdate(ctx context.Context, c *entity.Categ
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return pkg.ErrNoFound
+		return entity.ErrNotFound
 	}
 	return nil
 }
@@ -54,7 +51,7 @@ func (r *CategoryRepository) CategoryDelete(ctx context.Context, id int) error {
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return pkg.ErrNoFound
+		return entity.ErrNotFound
 	}
 	return nil
 }

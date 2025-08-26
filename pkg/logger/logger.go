@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/4uvirik/ProductService/service/logger/handler/slogpretty"
+	"github.com/4uvirik/ProductService/pkg/logger/handler/slogpretty"
 	"log/slog"
 	"os"
 )

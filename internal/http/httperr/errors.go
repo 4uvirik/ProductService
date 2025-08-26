@@ -1,11 +1,12 @@
-package pkg
+package httperr
 
 import (
 	"errors"
+	"github.com/4uvirik/ProductService/internal/entity"
 	"net/http"
 )
 
-// Ошибка ответа
+// ErrorResponse - ошибка ответа
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
@@ -16,11 +17,13 @@ type ErrorResponse struct {
 // остальные ошибки -> 400 Bad Request
 func MapErrorToStatus(err error) int {
 	switch {
-	case errors.Is(err, ErrNoFound):
+	case errors.Is(err, entity.ErrNotFound):
 		return http.StatusNotFound
-	default:
+	case errors.Is(err, entity.ErrBadRequest):
 		return http.StatusBadRequest
+	case errors.Is(err, entity.ErrNoFields):
+		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
 	}
 }
-
-var ErrNoFound = errors.New("no found")

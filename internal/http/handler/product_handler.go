@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"encoding/json"
 	"github.com/4uvirik/ProductService/internal/entity"
+	"github.com/4uvirik/ProductService/internal/http/httperr"
+	"github.com/4uvirik/ProductService/internal/http/response"
 	"github.com/4uvirik/ProductService/internal/usecase"
-	"github.com/4uvirik/ProductService/pkg"
 	"github.com/labstack/echo/v4"
 	"log/slog"
 	"net/http"
@@ -37,22 +37,23 @@ func (h *ProductHandler) RegisterProductRoutes(g *echo.Group) {
 
 // ProductCreate - обрабатывает POST запрос на создание нового продукта. Передает данные в usecase
 func (h *ProductHandler) ProductCreate(c echo.Context) error {
-	var req entity.Product
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: "invalid json"})
+	var dto entity.ProductCreate
+	if err := c.Bind(&dto); err != nil {
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid json"})
 	}
 
-	if err := h.uc.ProductCreate(c.Request().Context(), &req); err != nil {
-		return c.JSON(pkg.MapErrorToStatus(err), pkg.ErrorResponse{Error: err.Error()})
+	product, err := h.uc.ProductCreate(c.Request().Context(), dto)
+	if err != nil {
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
-	return c.JSON(http.StatusCreated, req)
+	return c.JSON(http.StatusCreated, product)
 }
 
 // ProductGetAll - обрабатывает GET запрос для получения всех продуктов
 func (h *ProductHandler) ProductGetAll(c echo.Context) error {
 	allProducts, err := h.uc.ProductGetAll(c.Request().Context())
 	if err != nil {
-		return c.JSON(pkg.MapErrorToStatus(err), pkg.ErrorResponse{Error: err.Error()})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
 	return c.JSON(http.StatusOK, allProducts)
 }
@@ -61,38 +62,44 @@ func (h *ProductHandler) ProductGetAll(c echo.Context) error {
 func (h *ProductHandler) ProductGetByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: "invalid id"})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
 	}
 
 	product, err := h.uc.ProductGetByID(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(pkg.MapErrorToStatus(err), pkg.ErrorResponse{Error: err.Error()})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
 	return c.JSON(http.StatusOK, product)
 }
 
 // ProductUpdate - обрабатывает PUT запрос на обновление продукта. Декодирует тело запроса и обновляет продукт
 func (h *ProductHandler) ProductUpdate(c echo.Context) error {
-	var upd entity.ProductUpdate
-	if err := json.NewDecoder(c.Request().Body).Decode(&upd); err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: "invalid request body"})
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
 	}
 
-	if err := h.uc.ProductUpdate(c.Request().Context(), &upd); err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: err.Error()})
+	var dto entity.ProductUpdate
+	if err := c.Bind(&dto); err != nil {
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid request body"})
 	}
-	return c.JSON(http.StatusOK, pkg.Response{Result: "updated"})
+	dto.ID = id
+
+	if err := h.uc.ProductUpdate(c.Request().Context(), &dto); err != nil {
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+	}
+	return c.JSON(http.StatusOK, response.Response{Result: "updated"})
 }
 
 // ProductDelete - обрабатывает DELETE запрос на удаление продукта по id
 func (h *ProductHandler) ProductDelete(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: "invalid id"})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
 	}
 
 	if err := h.uc.ProductDelete(c.Request().Context(), id); err != nil {
-		return c.JSON(http.StatusBadRequest, pkg.ErrorResponse{Error: err.Error()})
+		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
-	return c.JSON(http.StatusOK, pkg.Response{Result: "deleted"})
+	return c.JSON(http.StatusOK, response.Response{Result: "deleted"})
 }
