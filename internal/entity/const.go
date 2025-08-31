@@ -22,11 +22,6 @@ UPDATE products
 SET name = $1, price = $2, category_id = $3
 WHERE id = $4;
 `
-const QueryProductUpdatePrice = `
-UPDATE products 
-SET price=$1 
-WHERE id=$2
-`
 const QueryProductDelete = `
 DELETE FROM products 
 WHERE id = $1
