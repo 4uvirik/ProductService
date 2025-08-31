@@ -1,11 +1,12 @@
 package usecase
 
 import (
+	"log/slog"
+
 	"github.com/4uvirik/ProductService/internal/entity"
 	"github.com/4uvirik/ProductService/pkg/logger/sl"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/net/context"
-	"log/slog"
 )
 
 type ProductUseCase struct {
@@ -20,10 +21,11 @@ func NewProductUseCase(oper ProductOperations, logger *slog.Logger) *ProductUseC
 
 // ------------- Реализация ProductOperations --------------
 
-// ProductCreate - метод создания нового продукта
+// ProductCreate - метод создания нового продукта.
 func (u *ProductUseCase) ProductCreate(ctx context.Context, dto entity.ProductCreate) (*entity.Product, error) {
 	if err := u.validate.Struct(dto); err != nil {
 		u.logger.Warn("validation failed for product create", sl.Err(err))
+
 		return nil, err
 	}
 
@@ -32,23 +34,25 @@ func (u *ProductUseCase) ProductCreate(ctx context.Context, dto entity.ProductCr
 		Price:      dto.Price,
 		CategoryID: dto.CategoryID,
 	}
+
 	return u.oper.ProductCreate(ctx, product)
 }
 
-// ProductGetAll - метод вывода всех продуктов
+// ProductGetAll - метод вывода всех продуктов.
 func (u *ProductUseCase) ProductGetAll(ctx context.Context) ([]entity.Product, error) {
 	return u.oper.ProductGetAll(ctx)
 }
 
-// ProductGetByID - метод вывода продукта по id
+// ProductGetByID - метод вывода продукта по id.
 func (u *ProductUseCase) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) {
 	return u.oper.ProductGetByID(ctx, id)
 }
 
-// ProductUpdate - метод изменения одного или нескольких полей (название, цена, категория) продукта по id
+// ProductUpdate - метод изменения одного или нескольких полей (название, цена, категория) продукта по id.
 func (u *ProductUseCase) ProductUpdate(ctx context.Context, dto *entity.ProductUpdate) error {
 	if err := u.validate.Struct(dto); err != nil {
 		u.logger.Warn("validation failed for product update", sl.Err(err))
+
 		return err
 	}
 
@@ -56,31 +60,36 @@ func (u *ProductUseCase) ProductUpdate(ctx context.Context, dto *entity.ProductU
 		return entity.ErrNoFields
 	}
 
-	existing, err := u.oper.ProductGetByID(ctx, int(dto.ID))
+	existing, err := u.oper.ProductGetByID(ctx, dto.ID)
 	if err != nil {
 		u.logger.Error("failed to get product", sl.Err(err))
+
 		return err
 	}
 
 	if dto.Name != nil {
 		existing.Name = *dto.Name
-		u.logger.Info("update name, new name:", existing.Name)
+		u.logger.Info("update name", slog.String("new name:", existing.Name))
 	}
+
 	if dto.Price != nil {
 		existing.Price = *dto.Price
-		u.logger.Info("update price, new price:", existing.Price)
+		u.logger.Info("update price", slog.Any("new price:", existing.Price))
 	}
+
 	if dto.CategoryID != nil {
 		existing.CategoryID = dto.CategoryID
-		u.logger.Info("update category id, new category id:", existing.CategoryID)
+		u.logger.Info("update category id", slog.Any("new category id:", existing.CategoryID))
 	}
+
 	return u.oper.ProductUpdate(ctx, existing)
 }
 
-// ProductDelete - метод удаления продукта по id
+// ProductDelete - метод удаления продукта по id.
 func (u *ProductUseCase) ProductDelete(ctx context.Context, id int) error {
 	if id <= 0 {
 		return entity.ErrNotFound
 	}
+
 	return u.oper.ProductDelete(ctx, id)
 }

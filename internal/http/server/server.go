@@ -1,25 +1,19 @@
 package server
 
 import (
+	"log/slog"
+
 	"github.com/4uvirik/ProductService/config"
 	"github.com/4uvirik/ProductService/internal/http/handler"
 	"github.com/4uvirik/ProductService/internal/usecase"
 	"github.com/labstack/echo/v4"
-	"log/slog"
 )
 
-type Server struct {
-	cfg        config.AppConfig
-	logger     *slog.Logger
-	UCCategory *usecase.CategoryUseCase
-	UCProduct  *usecase.ProductUseCase
-}
-
-func Run(cfg *config.Config, UCCategory *usecase.CategoryUseCase, UCProduct *usecase.ProductUseCase, logger *slog.Logger) {
+func Run(cfg *config.Config, categoryUC *usecase.CategoryUseCase, productUC *usecase.ProductUseCase, logger *slog.Logger) {
 	e := echo.New()
 
-	handlerCategory := handler.NewCategoryHandler(UCCategory, logger)
-	handlerProduct := handler.NewProductHandler(UCProduct, logger)
+	handlerCategory := handler.NewCategoryHandler(categoryUC, logger)
+	handlerProduct := handler.NewProductHandler(productUC, logger)
 
 	api := e.Group("")
 	handlerCategory.RegisterCategoryRoutes(api)

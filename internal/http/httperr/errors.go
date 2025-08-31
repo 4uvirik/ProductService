@@ -2,21 +2,17 @@ package httperr
 
 import (
 	"errors"
-	"github.com/4uvirik/ProductService/internal/entity"
 	"net/http"
+
+	"github.com/4uvirik/ProductService/internal/entity"
 )
 
-// ErrorResponse - ошибка ответа
+// ErrorResponse - ошибка ответа.
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-// MapErrorToStatus принимает ошибку из бизнес или репозиторного слоя
-// и возвращает соответствующий HTTP статус:
-// ErrNotFound -> 404 Not Found
-// ErrNoFields -> 400 Bad Request
-// ErrBadRequest -> 400 Bad Request
-// остальные ошибки -> 500 Internal Server Error
+// MapErrorToStatus принимает ошибку из бизнес или репозиторного слоя.
 func MapErrorToStatus(err error) int {
 	switch {
 	case errors.Is(err, entity.ErrNotFound):

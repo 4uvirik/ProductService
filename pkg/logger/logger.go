@@ -1,9 +1,10 @@
 package logger
 
 import (
-	"github.com/4uvirik/ProductService/pkg/logger/handler/slogpretty"
 	"log/slog"
 	"os"
+
+	"github.com/4uvirik/ProductService/pkg/logger/handler/slogpretty"
 )
 
 const (

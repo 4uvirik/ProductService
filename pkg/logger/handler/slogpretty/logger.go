@@ -57,11 +57,12 @@ func (h *PrettyHandler) Handle(_ context.Context, r slog.Record) error {
 		fields[a.Key] = a.Value.Any()
 	}
 
-	var b []byte
+	var sbt []byte
+
 	var err error
 
 	if len(fields) > 0 {
-		b, err = json.MarshalIndent(fields, "", "  ")
+		sbt, err = json.MarshalIndent(fields, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -74,7 +75,7 @@ func (h *PrettyHandler) Handle(_ context.Context, r slog.Record) error {
 		timeStr,
 		level,
 		msg,
-		color.WhiteString(string(b)),
+		color.WhiteString(string(sbt)),
 	)
 
 	return nil

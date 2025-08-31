@@ -2,8 +2,11 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strings"
+
+	"github.com/4uvirik/ProductService/internal/entity"
 
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
@@ -17,32 +20,33 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Name string `yaml:"name" env:"APP_NAME"`
-	Host string `yaml:"host" env:"APP_HOST"`
-	Port string `yaml:"port" env:"APP_PORT"`
+	Name string `env:"APP_NAME" yaml:"name"`
+	Host string `env:"APP_HOST" yaml:"host"`
+	Port string `env:"APP_PORT" yaml:"port"`
 }
 
 type DatabaseConfig struct {
-	Host     string `yaml:"host" env:"DB_HOST"`
-	Port     string `yaml:"port" env:"DB_PORT"`
-	User     string `yaml:"user" env:"DB_USER"`
-	Password string `yaml:"password" env:"DB_PASSWORD"`
-	Name     string `yaml:"name" env:"DB_NAME"`
-	SSLMode  string `yaml:"ssl_mode" env:"DB_SSL_MODE" envDefault:"disable"`
+	Host     string `env:"DB_HOST"     yaml:"host"`
+	Port     string `env:"DB_PORT"     yaml:"port"`
+	User     string `env:"DB_USER"     yaml:"user"`
+	Password string `env:"DB_PASSWORD" yaml:"password"`
+	Name     string `env:"DB_NAME"     yaml:"name"`
+	SSLMode  string `env:"DB_SSL_MODE" envDefault:"disable" yaml:"ssl_mode"`
 }
 
 type LoggerConfig struct {
-	Level string `yaml:"level" env:"LOG_LEVEL" envDefault:"info"`
+	Level string `env:"LOG_LEVEL" envDefault:"info" yaml:"level"`
 }
 
 func loadFromEnv(config *Config) error {
-
 	if err := godotenv.Load(".env"); err != nil {
 		return fmt.Errorf("cant load env file: %w", err)
 	}
+
 	if err := env.Parse(config); err != nil {
 		return fmt.Errorf("error to parse env in config: %w", err)
 	}
+
 	return nil
 }
 
@@ -55,11 +59,11 @@ func loadFromYaml(path string, config *Config) error {
 	if err := yaml.Unmarshal(date, config); err != nil {
 		return fmt.Errorf("cant yaml unmarshal: %w", err)
 	}
+
 	return nil
 }
 
 func LoadConfig(yamlPath string) (*Config, error) {
-
 	config := &Config{}
 
 	if err := loadFromEnv(config); err == nil {
@@ -73,14 +77,15 @@ func LoadConfig(yamlPath string) (*Config, error) {
 	return config, nil
 }
 
-func (c *Config) DSN() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		c.Database.User, c.Database.Password, c.Database.Host, c.Database.Port, c.Database.Name,
+func (cfg *Config) DSN() string {
+	hostAndPort := net.JoinHostPort(cfg.Database.Host, cfg.Database.Port)
+
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+		cfg.Database.User, cfg.Database.Password, hostAndPort, cfg.Database.Name,
 	)
 }
 
 func (cfg *Config) Validate() error {
-
 	var errorsMsg []string
 
 	if cfg.App.Name == "" {
@@ -116,7 +121,8 @@ func (cfg *Config) Validate() error {
 	}
 
 	if len(errorsMsg) > 0 {
-		return fmt.Errorf("%s", strings.Join(errorsMsg, ": "))
+		return fmt.Errorf("%w: %s", entity.ErrInvalidConfig, strings.Join(errorsMsg, ": "))
 	}
+
 	return nil
 }

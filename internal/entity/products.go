@@ -1,6 +1,6 @@
 package entity
 
-// Product - основная сущность товара, как в БД
+// Product - основная сущность товара, как в БД.
 type Product struct {
 	ID         int     `json:"id"`
 	Name       string  `json:"name"`

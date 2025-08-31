@@ -2,14 +2,15 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
+	"net/http"
+	"strconv"
+
 	"github.com/4uvirik/ProductService/internal/entity"
 	"github.com/4uvirik/ProductService/internal/http/httperr"
 	"github.com/4uvirik/ProductService/internal/http/response"
 	"github.com/4uvirik/ProductService/internal/usecase"
 	"github.com/labstack/echo/v4"
-	"log/slog"
-	"net/http"
-	"strconv"
 )
 
 type CategoryHandler struct {
@@ -22,57 +23,57 @@ func NewCategoryHandler(uc *usecase.CategoryUseCase, logger *slog.Logger) *Categ
 }
 
 // RegisterCategoryRoutes - регистрирует маршруты для работы с категориями.
-// Настраивает пути и методы:
-// POST   /category         - создание продукта
-// PUT    /category/:id     - обновление данных продукта по id
-// DELETE /category/:id     - удаление продукта по id
 func (h *CategoryHandler) RegisterCategoryRoutes(g *echo.Group) {
 	g.POST(entity.CategoryURL, h.CategoryCreate)
 	g.PUT(entity.CategoryURL+entity.IDParam, h.CategoryUpdate)
 	g.DELETE(entity.CategoryURL+entity.IDParam, h.CategoryDelete)
 }
 
-// CategoryCreate - обрабатывает POST запрос на создание новой категории продуктов. Передает данные в usecase
-func (h *CategoryHandler) CategoryCreate(c echo.Context) error {
+// CategoryCreate - обрабатывает POST запрос на создание новой категории продуктов. Передает данные в usecase.
+func (h *CategoryHandler) CategoryCreate(ctx echo.Context) error {
 	var req entity.Category
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid json"})
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid json"})
 	}
 
-	if err := h.uc.CategoryCreate(c.Request().Context(), &req); err != nil {
-		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+	if err := h.uc.CategoryCreate(ctx.Request().Context(), &req); err != nil {
+		return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
-	return c.JSON(http.StatusCreated, req)
+
+	return ctx.JSON(http.StatusCreated, req)
 }
 
-// CategoryUpdate - обрабатывает PUT запрос на обновление названия категории продуктов. Декодирует тело запроса и обновляет продукт
-func (h *CategoryHandler) CategoryUpdate(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+// CategoryUpdate - обрабатывает PUT запрос на обновление названия категории продуктов. Декодирует тело запроса и обновляет продукт.
+func (h *CategoryHandler) CategoryUpdate(ctx echo.Context) error {
+	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
+		return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
 	}
 
 	var upd entity.Category
-	if err := json.NewDecoder(c.Request().Body).Decode(&upd); err != nil {
-		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid request body"})
+	if err := json.NewDecoder(ctx.Request().Body).Decode(&upd); err != nil {
+		return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid request body"})
 	}
+
 	upd.ID = id
 
-	if err := h.uc.CategoryUpdate(c.Request().Context(), &upd); err != nil {
-		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+	if err := h.uc.CategoryUpdate(ctx.Request().Context(), &upd); err != nil {
+		return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
-	return c.JSON(http.StatusOK, response.Response{Result: "updated"})
+
+	return ctx.JSON(http.StatusOK, response.Response{Result: "updated"})
 }
 
-// CategoryDelete - обрабатывает DELETE запрос на удаление категории продуктов по id
-func (h *CategoryHandler) CategoryDelete(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+// CategoryDelete - обрабатывает DELETE запрос на удаление категории продуктов по id.
+func (h *CategoryHandler) CategoryDelete(ctx echo.Context) error {
+	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
+		return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
 	}
 
-	if err := h.uc.CategoryDelete(c.Request().Context(), id); err != nil {
-		return c.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+	if err := h.uc.CategoryDelete(ctx.Request().Context(), id); err != nil {
+		return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
 	}
-	return c.JSON(http.StatusOK, response.Response{Result: "deleted"})
+
+	return ctx.JSON(http.StatusOK, response.Response{Result: "deleted"})
 }
