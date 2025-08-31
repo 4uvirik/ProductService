@@ -1,7 +1,7 @@
 APP_NAME := Product service
 ENTRYPOINT := cmd/main.go
 
-.PHONY: tests cover migrate-up migrate-down migrate-status migrate-create
+.PHONY: tests cover migrate-up migrate-down migrate-status migrate-create lint lint-fix
 
 # ---------- Unit Тесты ----------
 tests:
@@ -26,3 +26,10 @@ migrate-status:
 
 migrate-create:
 	goose -dir ./migrations create $(name) sql
+
+# ---------- Проверка линтерами ----------
+lint:
+	golangci-lint run ./...
+
+lint-fix:
+	golandci-lint run --fix ./...
