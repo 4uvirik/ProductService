@@ -39,8 +39,8 @@ type LoggerConfig struct {
 }
 
 func loadFromEnv(config *Config) error {
-	if err := godotenv.Load(".env"); err != nil {
-		return fmt.Errorf("cant load env file: %w", err)
+	if _, err := os.Stat(".env"); err == nil {
+		_ = godotenv.Load(".env")
 	}
 
 	if err := env.Parse(config); err != nil {
