@@ -63,6 +63,7 @@ func loadFromYaml(path string, config *Config) error {
 	return nil
 }
 
+// LoadConfig - загрузка конфига сначала из .env иотом из yaml.
 func LoadConfig(yamlPath string) (*Config, error) {
 	config := &Config{}
 
