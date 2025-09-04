@@ -6,5 +6,6 @@ tmp/
 *.tmp
 .out
 coverage.out
+coverage.html
 .gitignore
 .git
