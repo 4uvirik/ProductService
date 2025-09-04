@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/4uvirik/ProductService/internal/entity"
 
@@ -20,9 +21,10 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Name string `env:"APP_NAME" yaml:"name"`
-	Host string `env:"APP_HOST" yaml:"host"`
-	Port string `env:"APP_PORT" yaml:"port"`
+	Name            string        `env:"APP_NAME"             yaml:"name"`
+	Host            string        `env:"APP_HOST"             yaml:"host"`
+	Port            string        `env:"APP_PORT"             yaml:"port"`
+	ShutdownTimeout time.Duration `env:"APP_SHUTDOWN_TIMEOUT" envDefault:"5s" yaml:"shutdown_timeout"`
 }
 
 type DatabaseConfig struct {

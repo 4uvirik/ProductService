@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/4uvirik/ProductService/config"
 	"github.com/4uvirik/ProductService/internal/http/server"
@@ -27,7 +31,30 @@ func main() {
 
 	categoryUC, productUC := initUseCase(postgres, logger)
 
-	server.Run(cfg, categoryUC, productUC, logger)
+	srv := server.Run(cfg, categoryUC, productUC, logger)
+
+	go func() {
+		address := cfg.App.Host + ":" + cfg.App.Port
+
+		if err := srv.Start(address); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("failed start server", slog.String("error", err.Error()))
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit
+	logger.Info("received shutdown signal")
+
+	ctx, cansel := context.WithTimeout(context.Background(), cfg.App.ShutdownTimeout)
+	defer cansel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Error("server forced off", slog.String("error", err.Error()))
+	}
+
+	logger.Info("server shutdown correctly")
 }
 
 // loadEnv - загрузка переменных окружения.

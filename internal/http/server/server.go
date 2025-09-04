@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func Run(cfg *config.Config, categoryUC *usecase.CategoryUseCase, productUC *usecase.ProductUseCase, logger *slog.Logger) {
+func Run(cfg *config.Config, categoryUC *usecase.CategoryUseCase, productUC *usecase.ProductUseCase, logger *slog.Logger) *echo.Echo {
 	e := echo.New()
 
 	handlerCategory := handler.NewCategoryHandler(categoryUC, logger)
@@ -21,5 +21,6 @@ func Run(cfg *config.Config, categoryUC *usecase.CategoryUseCase, productUC *use
 
 	address := cfg.App.Host + ":" + cfg.App.Port
 	logger.Info("server started", slog.String("address", address))
-	e.Logger.Fatal(e.Start(address))
+
+	return e
 }
