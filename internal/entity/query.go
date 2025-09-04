@@ -43,9 +43,3 @@ const QueryCategoryDelete = `
 	DELETE FROM category 
 		WHERE id = $1
 `
-
-// ------ Константы для URL ------
-
-const ProductURL = "/product"
-const CategoryURL = "/category"
-const IDParam = "/:id"

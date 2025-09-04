@@ -23,11 +23,11 @@ func NewProductHandler(uc *usecase.ProductUseCase, logger *slog.Logger) *Product
 
 // RegisterProductRoutes - регистрирует маршруты для работы с продуктами.
 func (h *ProductHandler) RegisterProductRoutes(g *echo.Group) {
-	g.POST(entity.ProductURL, h.ProductCreate)
-	g.GET(entity.ProductURL, h.ProductGetAll)
-	g.GET(entity.ProductURL+entity.IDParam, h.ProductGetByID)
-	g.PUT(entity.ProductURL+entity.IDParam, h.ProductUpdate)
-	g.DELETE(entity.ProductURL+entity.IDParam, h.ProductDelete)
+	g.POST("/product", h.ProductCreate)
+	g.GET("/product", h.ProductGetAll)
+	g.GET("/product/:id", h.ProductGetByID)
+	g.PUT("/product/:id", h.ProductUpdate)
+	g.DELETE("/product/:id", h.ProductDelete)
 }
 
 // ProductCreate - обрабатывает POST запрос на создание нового продукта. Передает данные в usecase.

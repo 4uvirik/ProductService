@@ -24,9 +24,9 @@ func NewCategoryHandler(uc *usecase.CategoryUseCase, logger *slog.Logger) *Categ
 
 // RegisterCategoryRoutes - регистрирует маршруты для работы с категориями.
 func (h *CategoryHandler) RegisterCategoryRoutes(g *echo.Group) {
-	g.POST(entity.CategoryURL, h.CategoryCreate)
-	g.PUT(entity.CategoryURL+entity.IDParam, h.CategoryUpdate)
-	g.DELETE(entity.CategoryURL+entity.IDParam, h.CategoryDelete)
+	g.POST("/category", h.CategoryCreate)
+	g.PUT("/category/:id", h.CategoryUpdate)
+	g.DELETE("/category/:id", h.CategoryDelete)
 }
 
 // CategoryCreate - обрабатывает POST запрос на создание новой категории продуктов. Передает данные в usecase.
