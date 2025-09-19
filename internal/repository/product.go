@@ -18,7 +18,7 @@ func NewProductRepository(db *pgxpool.Pool, logger *slog.Logger) *ProductReposit
 }
 
 // ProductCreate - создает новый товар в базе данных. При успешном добавлении присваивает ID созданному объекту.
-func (r *ProductRepository) ProductCreate(ctx context.Context, prod entity.Product) (*entity.Product, error) {
+func (r *ProductRepository) ProductCreate(ctx context.Context, prod *entity.Product) (*entity.Product, error) {
 	q := entity.QueryProductCreate
 
 	err := r.db.
@@ -28,7 +28,7 @@ func (r *ProductRepository) ProductCreate(ctx context.Context, prod entity.Produ
 		r.logger.Error("failed to create product", slog.Any("err", err))
 	}
 
-	return &prod, nil
+	return prod, nil
 }
 
 // ProductGetAll - возвращает список всех товаров из базы данных.
