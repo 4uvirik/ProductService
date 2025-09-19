@@ -1,0 +1,16 @@
+app:
+  name: products-service
+  host: 0.0.0.0
+  port: 8080
+  shutdown_timeout: 5s
+
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: postgres
+  name: postgres
+  ssl_mode: disable
+
+logger:
+  level: debug

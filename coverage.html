@@ -1,0 +1,1206 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cmd: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/4uvirik/ProductService/cmd/main.go (0.0%)</option>
+				
+				<option value="file1">github.com/4uvirik/ProductService/config/config.go (0.0%)</option>
+				
+				<option value="file2">github.com/4uvirik/ProductService/internal/http/handler/category_handler.go (0.0%)</option>
+				
+				<option value="file3">github.com/4uvirik/ProductService/internal/http/handler/product_handler.go (0.0%)</option>
+				
+				<option value="file4">github.com/4uvirik/ProductService/internal/http/httperr/errors.go (0.0%)</option>
+				
+				<option value="file5">github.com/4uvirik/ProductService/internal/http/server/server.go (0.0%)</option>
+				
+				<option value="file6">github.com/4uvirik/ProductService/internal/repository/category.go (0.0%)</option>
+				
+				<option value="file7">github.com/4uvirik/ProductService/internal/repository/postgres.go (0.0%)</option>
+				
+				<option value="file8">github.com/4uvirik/ProductService/internal/repository/product.go (0.0%)</option>
+				
+				<option value="file9">github.com/4uvirik/ProductService/internal/usecase/category.go (0.0%)</option>
+				
+				<option value="file10">github.com/4uvirik/ProductService/internal/usecase/product.go (0.0%)</option>
+				
+				<option value="file11">github.com/4uvirik/ProductService/pkg/logger/handler/slogdiscard/logger.go (0.0%)</option>
+				
+				<option value="file12">github.com/4uvirik/ProductService/pkg/logger/handler/slogpretty/logger.go (0.0%)</option>
+				
+				<option value="file13">github.com/4uvirik/ProductService/pkg/logger/logger.go (0.0%)</option>
+				
+				<option value="file14">github.com/4uvirik/ProductService/pkg/logger/sl/error.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "context"
+        "errors"
+        "log"
+        "log/slog"
+        "net/http"
+        "os"
+        "os/signal"
+        "syscall"
+
+        "github.com/4uvirik/ProductService/config"
+        "github.com/4uvirik/ProductService/internal/http/server"
+        "github.com/4uvirik/ProductService/internal/repository"
+        "github.com/4uvirik/ProductService/internal/usecase"
+        "github.com/4uvirik/ProductService/pkg/logger"
+        "github.com/joho/godotenv"
+)
+
+func main() <span class="cov0" title="0">{
+        loadEnv()
+
+        cfg := initConfig()
+
+        logger := initLogger(cfg)
+
+        postgres := initPostgres(cfg, logger)
+
+        defer postgres.Pool.Close()
+
+        categoryUC, productUC := initUseCase(postgres, logger)
+
+        srv := server.Run(cfg, categoryUC, productUC, logger)
+
+        go func() </span><span class="cov0" title="0">{
+                address := cfg.App.Host + ":" + cfg.App.Port
+
+                if err := srv.Start(address); err != nil &amp;&amp; !errors.Is(err, http.ErrServerClosed) </span><span class="cov0" title="0">{
+                        logger.Error("failed start server", slog.String("error", err.Error()))
+                }</span>
+        }()
+
+        <span class="cov0" title="0">quit := make(chan os.Signal, 1)
+        signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+        &lt;-quit
+        logger.Info("received shutdown signal")
+
+        ctx, cansel := context.WithTimeout(context.Background(), cfg.App.ShutdownTimeout)
+        defer cansel()
+
+        if err := srv.Shutdown(ctx); err != nil </span><span class="cov0" title="0">{
+                logger.Error("server forced off", slog.String("error", err.Error()))
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("server shutdown correctly")</span>
+}
+
+// loadEnv - загрузка переменных окружения.
+func loadEnv() <span class="cov0" title="0">{
+        if err := godotenv.Load(".env"); err != nil </span><span class="cov0" title="0">{
+                log.Println(".env file not found")
+        }</span>
+}
+
+// initConfig - загрузка конфига и проверка на валидацию.
+func initConfig() *config.Config <span class="cov0" title="0">{
+        yamlPath := os.Getenv("YAML_PATH")
+
+        cfg, err := config.LoadConfig(yamlPath)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("failed to load config: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := cfg.Validate(); err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("config validate failed: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">return cfg</span>
+}
+
+// initLogger - загрузка и настройка логера.
+func initLogger(cfg *config.Config) *slog.Logger <span class="cov0" title="0">{
+        logger, err := logger.ConfigLogger(cfg.Logger.Level)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("error creating logger: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">logger.Debug("configuration reading success", slog.Any("cfg", cfg))
+
+        return logger</span>
+}
+
+// initPostgres - подключение к базе данных по DSN из конфига.
+func initPostgres(cfg *config.Config, logger *slog.Logger) *repository.Postgres <span class="cov0" title="0">{
+        postgres, err := repository.NewPostgres(context.Background(), cfg.DSN(), logger)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("error creating new repository: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">return postgres</span>
+}
+
+// initUseCase - загрузка репозитория и бизнес логики (usecase).
+func initUseCase(postgres *repository.Postgres, logger *slog.Logger) (*usecase.CategoryUseCase, *usecase.ProductUseCase) <span class="cov0" title="0">{
+        repoCategory := repository.NewCategoryRepository(postgres.Pool, logger)
+        repoProduct := repository.NewProductRepository(postgres.Pool, logger)
+
+        categoryUC := usecase.NewCategoryUseCase(repoCategory, logger)
+        productUC := usecase.NewProductUseCase(repoProduct, logger)
+
+        return categoryUC, productUC
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package config
+
+import (
+        "fmt"
+        "net"
+        "os"
+        "strings"
+        "time"
+
+        "github.com/4uvirik/ProductService/internal/entity"
+
+        "github.com/caarlos0/env/v10"
+        "github.com/joho/godotenv"
+        "gopkg.in/yaml.v3"
+)
+
+type Config struct {
+        App      AppConfig      `yaml:"app"`
+        Database DatabaseConfig `yaml:"database"`
+        Logger   LoggerConfig   `yaml:"logger"`
+}
+
+type AppConfig struct {
+        Name            string        `env:"APP_NAME"             yaml:"name"`
+        Host            string        `env:"APP_HOST"             yaml:"host"`
+        Port            string        `env:"APP_PORT"             yaml:"port"`
+        ShutdownTimeout time.Duration `env:"APP_SHUTDOWN_TIMEOUT" envDefault:"5s" yaml:"shutdown_timeout"`
+}
+
+type DatabaseConfig struct {
+        Host     string `env:"DB_HOST"     yaml:"host"`
+        Port     string `env:"DB_PORT"     yaml:"port"`
+        User     string `env:"DB_USER"     yaml:"user"`
+        Password string `env:"DB_PASSWORD" yaml:"password"`
+        Name     string `env:"DB_NAME"     yaml:"name"`
+        SSLMode  string `env:"DB_SSL_MODE" envDefault:"disable" yaml:"ssl_mode"`
+}
+
+type LoggerConfig struct {
+        Level string `env:"LOG_LEVEL" envDefault:"info" yaml:"level"`
+}
+
+func loadFromEnv(config *Config) error <span class="cov0" title="0">{
+        if _, err := os.Stat(".env"); err == nil </span><span class="cov0" title="0">{
+                _ = godotenv.Load(".env")
+        }</span>
+
+        <span class="cov0" title="0">if err := env.Parse(config); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("error to parse env in config: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+func loadFromYaml(path string, config *Config) error <span class="cov0" title="0">{
+        date, err := os.ReadFile(path)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to read yaml file: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := yaml.Unmarshal(date, config); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("cant yaml unmarshal: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// LoadConfig - загрузка конфига сначала из .env потом из yaml.
+func LoadConfig(yamlPath string) (*Config, error) <span class="cov0" title="0">{
+        config := &amp;Config{}
+
+        if err := loadFromEnv(config); err == nil </span><span class="cov0" title="0">{
+                return config, nil
+        }</span>
+
+        <span class="cov0" title="0">if err := loadFromYaml(yamlPath, config); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return config, nil</span>
+}
+
+func (cfg *Config) DSN() string <span class="cov0" title="0">{
+        hostAndPort := net.JoinHostPort(cfg.Database.Host, cfg.Database.Port)
+
+        return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+                cfg.Database.User, cfg.Database.Password, hostAndPort, cfg.Database.Name,
+        )
+}</span>
+
+func (cfg *Config) Validate() error <span class="cov0" title="0">{
+        var errorsMsg []string
+
+        if cfg.App.Name == "" </span><span class="cov0" title="0">{
+                errorsMsg = append(errorsMsg, "invalid app name")
+        }</span>
+
+        <span class="cov0" title="0">if cfg.App.Host == "" </span><span class="cov0" title="0">{
+                errorsMsg = append(errorsMsg, "invalid app host")
+        }</span>
+
+        <span class="cov0" title="0">if cfg.App.Port == "" </span><span class="cov0" title="0">{
+                errorsMsg = append(errorsMsg, "invalid app port")
+        }</span>
+
+        <span class="cov0" title="0">if cfg.Database.Host == "" </span><span class="cov0" title="0">{
+                errorsMsg = append(errorsMsg, "invalid database host")
+        }</span>
+
+        <span class="cov0" title="0">if cfg.Database.Port == "" </span><span class="cov0" title="0">{
+                errorsMsg = append(errorsMsg, "invalid database port")
+        }</span>
+
+        <span class="cov0" title="0">if cfg.Database.User == "" </span><span class="cov0" title="0">{
+                errorsMsg = append(errorsMsg, "invalid database user")
+        }</span>
+
+        <span class="cov0" title="0">if cfg.Database.Password == "" </span><span class="cov0" title="0">{
+                errorsMsg = append(errorsMsg, "invalid database password")
+        }</span>
+
+        <span class="cov0" title="0">if cfg.Database.Name == "" </span><span class="cov0" title="0">{
+                errorsMsg = append(errorsMsg, "invalid database name")
+        }</span>
+
+        <span class="cov0" title="0">if len(errorsMsg) &gt; 0 </span><span class="cov0" title="0">{
+                return fmt.Errorf("%w: %s", entity.ErrInvalidConfig, strings.Join(errorsMsg, ": "))
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handler
+
+import (
+        "encoding/json"
+        "log/slog"
+        "net/http"
+        "strconv"
+
+        "github.com/4uvirik/ProductService/internal/entity"
+        "github.com/4uvirik/ProductService/internal/http/httperr"
+        "github.com/4uvirik/ProductService/internal/http/response"
+        "github.com/4uvirik/ProductService/internal/usecase"
+        "github.com/labstack/echo/v4"
+)
+
+type CategoryHandler struct {
+        uc     *usecase.CategoryUseCase
+        logger *slog.Logger
+}
+
+func NewCategoryHandler(uc *usecase.CategoryUseCase, logger *slog.Logger) *CategoryHandler <span class="cov0" title="0">{
+        return &amp;CategoryHandler{uc: uc, logger: logger}
+}</span>
+
+// RegisterCategoryRoutes - регистрирует маршруты для работы с категориями.
+func (h *CategoryHandler) RegisterCategoryRoutes(g *echo.Group) <span class="cov0" title="0">{
+        g.POST("/category", h.CategoryCreate)
+        g.PUT("/category/:id", h.CategoryUpdate)
+        g.DELETE("/category/:id", h.CategoryDelete)
+}</span>
+
+// CategoryCreate - обрабатывает POST запрос на создание новой категории продуктов. Передает данные в usecase.
+func (h *CategoryHandler) CategoryCreate(ctx echo.Context) error <span class="cov0" title="0">{
+        var req entity.Category
+        if err := ctx.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid json"})
+        }</span>
+
+        <span class="cov0" title="0">if err := h.uc.CategoryCreate(ctx.Request().Context(), &amp;req); err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+        }</span>
+
+        <span class="cov0" title="0">return ctx.JSON(http.StatusCreated, req)</span>
+}
+
+// CategoryUpdate - обрабатывает PUT запрос на обновление названия категории продуктов. Декодирует тело запроса и обновляет продукт.
+func (h *CategoryHandler) CategoryUpdate(ctx echo.Context) error <span class="cov0" title="0">{
+        id, err := strconv.Atoi(ctx.Param("id"))
+        if err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
+        }</span>
+
+        <span class="cov0" title="0">var upd entity.Category
+        if err := json.NewDecoder(ctx.Request().Body).Decode(&amp;upd); err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid request body"})
+        }</span>
+
+        <span class="cov0" title="0">upd.ID = id
+
+        if err := h.uc.CategoryUpdate(ctx.Request().Context(), &amp;upd); err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+        }</span>
+
+        <span class="cov0" title="0">return ctx.JSON(http.StatusOK, response.Response{Result: "updated"})</span>
+}
+
+// CategoryDelete - обрабатывает DELETE запрос на удаление категории продуктов по id.
+func (h *CategoryHandler) CategoryDelete(ctx echo.Context) error <span class="cov0" title="0">{
+        id, err := strconv.Atoi(ctx.Param("id"))
+        if err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
+        }</span>
+
+        <span class="cov0" title="0">if err := h.uc.CategoryDelete(ctx.Request().Context(), id); err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+        }</span>
+
+        <span class="cov0" title="0">return ctx.JSON(http.StatusOK, response.Response{Result: "deleted"})</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package handler
+
+import (
+        "log/slog"
+        "net/http"
+        "strconv"
+
+        "github.com/4uvirik/ProductService/internal/entity"
+        "github.com/4uvirik/ProductService/internal/http/httperr"
+        "github.com/4uvirik/ProductService/internal/http/response"
+        "github.com/4uvirik/ProductService/internal/usecase"
+        "github.com/labstack/echo/v4"
+)
+
+type ProductHandler struct {
+        uc     *usecase.ProductUseCase
+        logger *slog.Logger
+}
+
+func NewProductHandler(uc *usecase.ProductUseCase, logger *slog.Logger) *ProductHandler <span class="cov0" title="0">{
+        return &amp;ProductHandler{uc: uc, logger: logger}
+}</span>
+
+// RegisterProductRoutes - регистрирует маршруты для работы с продуктами.
+func (h *ProductHandler) RegisterProductRoutes(g *echo.Group) <span class="cov0" title="0">{
+        g.POST("/product", h.ProductCreate)
+        g.GET("/product", h.ProductGetAll)
+        g.GET("/product/:id", h.ProductGetByID)
+        g.PUT("/product/:id", h.ProductUpdate)
+        g.DELETE("/product/:id", h.ProductDelete)
+}</span>
+
+// ProductCreate - обрабатывает POST запрос на создание нового продукта. Передает данные в usecase.
+func (h *ProductHandler) ProductCreate(ctx echo.Context) error <span class="cov0" title="0">{
+        var dto entity.ProductCreate
+        if err := ctx.Bind(&amp;dto); err != nil </span><span class="cov0" title="0">{
+                h.logger.Error("bind error", slog.Any("err", err))
+
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid json"})
+        }</span>
+
+        <span class="cov0" title="0">product, err := h.uc.ProductCreate(ctx.Request().Context(), dto)
+        if err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+        }</span>
+
+        <span class="cov0" title="0">return ctx.JSON(http.StatusCreated, product)</span>
+}
+
+// ProductGetAll - обрабатывает GET запрос для получения всех продуктов.
+func (h *ProductHandler) ProductGetAll(ctx echo.Context) error <span class="cov0" title="0">{
+        allProducts, err := h.uc.ProductGetAll(ctx.Request().Context())
+        if err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+        }</span>
+
+        <span class="cov0" title="0">return ctx.JSON(http.StatusOK, allProducts)</span>
+}
+
+// ProductGetByID - обрабатывает GET запрос на получение продукта по id. Запрашивает продукт из usecase.
+func (h *ProductHandler) ProductGetByID(ctx echo.Context) error <span class="cov0" title="0">{
+        id, err := strconv.Atoi(ctx.Param("id"))
+        if err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
+        }</span>
+
+        <span class="cov0" title="0">product, err := h.uc.ProductGetByID(ctx.Request().Context(), id)
+        if err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+        }</span>
+
+        <span class="cov0" title="0">return ctx.JSON(http.StatusOK, product)</span>
+}
+
+// ProductUpdate - обрабатывает PUT запрос на обновление продукта. Декодирует тело запроса и обновляет продукт.
+func (h *ProductHandler) ProductUpdate(ctx echo.Context) error <span class="cov0" title="0">{
+        id, err := strconv.Atoi(ctx.Param("id"))
+        if err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
+        }</span>
+
+        <span class="cov0" title="0">var dto entity.ProductUpdate
+        if err := ctx.Bind(&amp;dto); err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid request body"})
+        }</span>
+
+        <span class="cov0" title="0">dto.ID = id
+
+        if err := h.uc.ProductUpdate(ctx.Request().Context(), &amp;dto); err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+        }</span>
+
+        <span class="cov0" title="0">return ctx.JSON(http.StatusOK, response.Response{Result: "updated"})</span>
+}
+
+// ProductDelete - обрабатывает DELETE запрос на удаление продукта по id.
+func (h *ProductHandler) ProductDelete(ctx echo.Context) error <span class="cov0" title="0">{
+        id, err := strconv.Atoi(ctx.Param("id"))
+        if err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: "invalid id"})
+        }</span>
+
+        <span class="cov0" title="0">if err := h.uc.ProductDelete(ctx.Request().Context(), id); err != nil </span><span class="cov0" title="0">{
+                return ctx.JSON(httperr.MapErrorToStatus(err), httperr.ErrorResponse{Error: err.Error()})
+        }</span>
+
+        <span class="cov0" title="0">return ctx.JSON(http.StatusOK, response.Response{Result: "deleted"})</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package httperr
+
+import (
+        "errors"
+        "net/http"
+
+        "github.com/4uvirik/ProductService/internal/entity"
+)
+
+// ErrorResponse - ошибка ответа.
+type ErrorResponse struct {
+        Error string `json:"error"`
+}
+
+// MapErrorToStatus принимает ошибку из бизнес или репозиторного слоя.
+func MapErrorToStatus(err error) int <span class="cov0" title="0">{
+        switch </span>{
+        case errors.Is(err, entity.ErrNotFound):<span class="cov0" title="0">
+                return http.StatusNotFound</span>
+        case errors.Is(err, entity.ErrNoFields):<span class="cov0" title="0">
+                return http.StatusBadRequest</span>
+        case errors.Is(err, entity.ErrBadRequest):<span class="cov0" title="0">
+                return http.StatusBadRequest</span>
+        default:<span class="cov0" title="0">
+                return http.StatusInternalServerError</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package server
+
+import (
+        "log/slog"
+
+        "github.com/4uvirik/ProductService/config"
+        "github.com/4uvirik/ProductService/internal/http/handler"
+        "github.com/4uvirik/ProductService/internal/usecase"
+        "github.com/labstack/echo/v4"
+)
+
+func Run(cfg *config.Config, categoryUC *usecase.CategoryUseCase, productUC *usecase.ProductUseCase, logger *slog.Logger) *echo.Echo <span class="cov0" title="0">{
+        e := echo.New()
+
+        handlerCategory := handler.NewCategoryHandler(categoryUC, logger)
+        handlerProduct := handler.NewProductHandler(productUC, logger)
+
+        api := e.Group("")
+        handlerCategory.RegisterCategoryRoutes(api)
+        handlerProduct.RegisterProductRoutes(api)
+
+        address := cfg.App.Host + ":" + cfg.App.Port
+        logger.Info("server started", slog.String("address", address))
+
+        return e
+}</span>
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package repository
+
+import (
+        "context"
+        "log/slog"
+
+        "github.com/4uvirik/ProductService/internal/entity"
+        "github.com/jackc/pgx/v5/pgxpool"
+)
+
+type CategoryRepository struct {
+        db     *pgxpool.Pool
+        logger *slog.Logger
+}
+
+func NewCategoryRepository(db *pgxpool.Pool, logger *slog.Logger) *CategoryRepository <span class="cov0" title="0">{
+        return &amp;CategoryRepository{db: db, logger: logger}
+}</span>
+
+// CategoryCreate - создает новую категорию в базе данных. При успешном добавлении присваивает ID созданному объекту.
+func (r *CategoryRepository) CategoryCreate(ctx context.Context, c *entity.Category) error <span class="cov0" title="0">{
+        q := entity.QueryCategoryCreate
+
+        err := r.db.
+                QueryRow(ctx, q, c.Name).
+                Scan(&amp;c.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                r.logger.Error("failed to create category", slog.Any("err", err))
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// CategoryUpdate - обновляет название категории в базе данных по id.
+func (r *CategoryRepository) CategoryUpdate(ctx context.Context, c *entity.Category) error <span class="cov0" title="0">{
+        q := entity.QueryCategoryUpdate
+
+        cat, err := r.db.Exec(ctx, q, c.Name, c.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                r.logger.Error("failed to update category", slog.Int("id", c.ID), slog.Any("err", err))
+
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if cat.RowsAffected() == 0 </span><span class="cov0" title="0">{
+                return entity.ErrNotFound
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// CategoryDelete - удаляет категорию из базы данных по id.
+func (r *CategoryRepository) CategoryDelete(ctx context.Context, id int) error <span class="cov0" title="0">{
+        q := entity.QueryCategoryDelete
+
+        cat, err := r.db.Exec(ctx, q, id)
+        if err != nil </span><span class="cov0" title="0">{
+                r.logger.Error("failed to delete category", slog.Int("id", id), slog.Any("err", err))
+
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if cat.RowsAffected() == 0 </span><span class="cov0" title="0">{
+                return entity.ErrNotFound
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package repository
+
+import (
+        "context"
+        "fmt"
+        "log/slog"
+
+        "github.com/4uvirik/ProductService/pkg/logger/sl"
+        "github.com/jackc/pgx/v5/pgxpool"
+)
+
+type Postgres struct {
+        Pool   *pgxpool.Pool
+        Logger *slog.Logger
+}
+
+func NewPostgres(ctx context.Context, dsn string, logger *slog.Logger) (*Postgres, error) <span class="cov0" title="0">{
+        pool, err := pgxpool.New(ctx, dsn)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Error("failed to connect to DB", sl.Err(err))
+
+                return nil, fmt.Errorf("pgx connect failed: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := pool.Ping(ctx); err != nil </span><span class="cov0" title="0">{
+                pool.Close()
+                logger.Error("bad DB ping", sl.Err(err))
+
+                return nil, fmt.Errorf("DB ping: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;Postgres{Pool: pool, Logger: logger}, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package repository
+
+import (
+        "context"
+        "log/slog"
+
+        "github.com/4uvirik/ProductService/internal/entity"
+        "github.com/jackc/pgx/v5/pgxpool"
+)
+
+type ProductRepository struct {
+        db     *pgxpool.Pool
+        logger *slog.Logger
+}
+
+func NewProductRepository(db *pgxpool.Pool, logger *slog.Logger) *ProductRepository <span class="cov0" title="0">{
+        return &amp;ProductRepository{db: db, logger: logger}
+}</span>
+
+// ProductCreate - создает новый товар в базе данных. При успешном добавлении присваивает ID созданному объекту.
+func (r *ProductRepository) ProductCreate(ctx context.Context, prod entity.Product) (*entity.Product, error) <span class="cov0" title="0">{
+        q := entity.QueryProductCreate
+
+        err := r.db.
+                QueryRow(ctx, q, prod.Name, prod.Price, prod.CategoryID).
+                Scan(&amp;prod.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                r.logger.Error("failed to create product", slog.Any("err", err))
+        }</span>
+
+        <span class="cov0" title="0">return &amp;prod, nil</span>
+}
+
+// ProductGetAll - возвращает список всех товаров из базы данных.
+func (r *ProductRepository) ProductGetAll(ctx context.Context) ([]entity.Product, error) <span class="cov0" title="0">{
+        q := entity.QueryProductGetAll
+
+        rows, err := r.db.Query(ctx, q)
+        if err != nil </span><span class="cov0" title="0">{
+                r.logger.Error("failed to get all products", slog.Any("err", err))
+
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">defer rows.Close()
+
+        var allProducts []entity.Product
+
+        for rows.Next() </span><span class="cov0" title="0">{
+                var prod entity.Product
+                if err := rows.Scan(&amp;prod.ID, &amp;prod.Name, &amp;prod.Price, &amp;prod.CategoryID); err != nil </span><span class="cov0" title="0">{
+                        r.logger.Error("failed to scan product row", slog.Any("err", err))
+
+                        return nil, err
+                }</span>
+
+                <span class="cov0" title="0">allProducts = append(allProducts, prod)</span>
+        }
+
+        <span class="cov0" title="0">if len(allProducts) == 0 </span><span class="cov0" title="0">{
+                return nil, entity.ErrNotFound
+        }</span>
+
+        <span class="cov0" title="0">return allProducts, nil</span>
+}
+
+// ProductGetByID - возвращает один товар из базы данных по его ID.
+func (r *ProductRepository) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) <span class="cov0" title="0">{
+        q := entity.QueryProductGetByID
+
+        var prod entity.Product
+
+        err := r.db.QueryRow(ctx, q, id).
+                Scan(&amp;prod.ID, &amp;prod.Name, &amp;prod.Price, &amp;prod.CategoryID)
+        if err != nil </span><span class="cov0" title="0">{
+                r.logger.Error("failed to get product by id", slog.Int("id", id), slog.Any("err", err))
+
+                return nil, entity.ErrNotFound
+        }</span>
+
+        <span class="cov0" title="0">return &amp;prod, nil</span>
+}
+
+// ProductUpdate - обновляет поля (имя, цена, категория) существующего товара в базе данных по id.
+func (r *ProductRepository) ProductUpdate(ctx context.Context, prod *entity.Product) error <span class="cov0" title="0">{
+        q := entity.QueryProductUpdate
+
+        execResult, err := r.db.Exec(ctx, q, prod.Name, prod.Price, prod.CategoryID, prod.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                r.logger.Error("failed to update product", slog.Int("id", prod.ID), slog.Any("err", err))
+
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if execResult.RowsAffected() == 0 </span><span class="cov0" title="0">{
+                return entity.ErrNotFound
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// ProductDelete - удаляет товар из базы данных по id.
+func (r *ProductRepository) ProductDelete(ctx context.Context, id int) error <span class="cov0" title="0">{
+        q := entity.QueryProductDelete
+
+        execResult, err := r.db.Exec(ctx, q, id)
+        if err != nil </span><span class="cov0" title="0">{
+                r.logger.Error("failed to delete product", slog.Int("id", id), slog.Any("err", err))
+
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if execResult.RowsAffected() == 0 </span><span class="cov0" title="0">{
+                return entity.ErrNotFound
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package usecase
+
+import (
+        "context"
+        "log/slog"
+
+        "github.com/4uvirik/ProductService/internal/entity"
+        "github.com/4uvirik/ProductService/pkg/logger/sl"
+        "github.com/go-playground/validator/v10"
+)
+
+type CategoryUseCase struct {
+        oper     CategoryOperations
+        logger   *slog.Logger
+        validate *validator.Validate
+}
+
+func NewCategoryUseCase(oper CategoryOperations, logger *slog.Logger) *CategoryUseCase <span class="cov0" title="0">{
+        return &amp;CategoryUseCase{oper: oper, logger: logger, validate: validator.New()}
+}</span>
+
+// ------------- Реализация CategoryOperations --------------
+
+// CategoryCreate - метод создания новой категории.
+func (u *CategoryUseCase) CategoryCreate(ctx context.Context, cat *entity.Category) error <span class="cov0" title="0">{
+        if err := u.validate.Struct(cat); err != nil </span><span class="cov0" title="0">{
+                u.logger.Warn("validation failed for product create", sl.Err(err))
+
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return u.oper.CategoryCreate(ctx, cat)</span>
+}
+
+// CategoryUpdate - метод изменения названия категории.
+func (u *CategoryUseCase) CategoryUpdate(ctx context.Context, cat *entity.Category) error <span class="cov0" title="0">{
+        if err := u.validate.Struct(cat); err != nil </span><span class="cov0" title="0">{
+                u.logger.Warn("validation failed for product update", sl.Err(err))
+
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return u.oper.CategoryUpdate(ctx, cat)</span>
+}
+
+// CategoryDelete - метод удаления категории по id.
+func (u *CategoryUseCase) CategoryDelete(ctx context.Context, id int) error <span class="cov0" title="0">{
+        if id &lt;= 0 </span><span class="cov0" title="0">{
+                return entity.ErrNotFound
+        }</span>
+
+        <span class="cov0" title="0">return u.oper.CategoryDelete(ctx, id)</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package usecase
+
+import (
+        "log/slog"
+
+        "github.com/4uvirik/ProductService/internal/entity"
+        "github.com/4uvirik/ProductService/pkg/logger/sl"
+        "github.com/go-playground/validator/v10"
+        "golang.org/x/net/context"
+)
+
+type ProductUseCase struct {
+        oper     ProductOperations
+        logger   *slog.Logger
+        validate *validator.Validate
+}
+
+func NewProductUseCase(oper ProductOperations, logger *slog.Logger) *ProductUseCase <span class="cov0" title="0">{
+        return &amp;ProductUseCase{oper: oper, logger: logger, validate: validator.New()}
+}</span>
+
+// ------------- Реализация ProductOperations --------------
+
+// ProductCreate - метод создания нового продукта.
+func (u *ProductUseCase) ProductCreate(ctx context.Context, dto entity.ProductCreate) (*entity.Product, error) <span class="cov0" title="0">{
+        if err := u.validate.Struct(dto); err != nil </span><span class="cov0" title="0">{
+                u.logger.Warn("validation failed for product create", sl.Err(err))
+
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">product := entity.Product{
+                Name:       dto.Name,
+                Price:      dto.Price,
+                CategoryID: dto.CategoryID,
+        }
+
+        return u.oper.ProductCreate(ctx, product)</span>
+}
+
+// ProductGetAll - метод вывода всех продуктов.
+func (u *ProductUseCase) ProductGetAll(ctx context.Context) ([]entity.Product, error) <span class="cov0" title="0">{
+        return u.oper.ProductGetAll(ctx)
+}</span>
+
+// ProductGetByID - метод вывода продукта по id.
+func (u *ProductUseCase) ProductGetByID(ctx context.Context, id int) (*entity.Product, error) <span class="cov0" title="0">{
+        return u.oper.ProductGetByID(ctx, id)
+}</span>
+
+// ProductUpdate - метод изменения одного или нескольких полей (название, цена, категория) продукта по id.
+func (u *ProductUseCase) ProductUpdate(ctx context.Context, dto *entity.ProductUpdate) error <span class="cov0" title="0">{
+        if err := u.validate.Struct(dto); err != nil </span><span class="cov0" title="0">{
+                u.logger.Warn("validation failed for product update", sl.Err(err))
+
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if dto.Name == nil &amp;&amp; dto.Price == nil &amp;&amp; dto.CategoryID == nil </span><span class="cov0" title="0">{
+                return entity.ErrNoFields
+        }</span>
+
+        <span class="cov0" title="0">existing, err := u.oper.ProductGetByID(ctx, dto.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                u.logger.Error("failed to get product", sl.Err(err))
+
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if dto.Name != nil </span><span class="cov0" title="0">{
+                existing.Name = *dto.Name
+                u.logger.Info("update name", slog.String("new name:", existing.Name))
+        }</span>
+
+        <span class="cov0" title="0">if dto.Price != nil </span><span class="cov0" title="0">{
+                existing.Price = *dto.Price
+                u.logger.Info("update price", slog.Any("new price:", existing.Price))
+        }</span>
+
+        <span class="cov0" title="0">if dto.CategoryID != nil </span><span class="cov0" title="0">{
+                existing.CategoryID = dto.CategoryID
+                u.logger.Info("update category id", slog.Any("new category id:", existing.CategoryID))
+        }</span>
+
+        <span class="cov0" title="0">return u.oper.ProductUpdate(ctx, existing)</span>
+}
+
+// ProductDelete - метод удаления продукта по id.
+func (u *ProductUseCase) ProductDelete(ctx context.Context, id int) error <span class="cov0" title="0">{
+        if id &lt;= 0 </span><span class="cov0" title="0">{
+                return entity.ErrNotFound
+        }</span>
+
+        <span class="cov0" title="0">return u.oper.ProductDelete(ctx, id)</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package slogdiscard
+
+import (
+        "context"
+        "log/slog"
+)
+
+func NewDiscardLogger() *slog.Logger <span class="cov0" title="0">{
+        return slog.New(NewDiscardHandler())
+}</span>
+
+type DiscardHandler struct{}
+
+func NewDiscardHandler() *DiscardHandler <span class="cov0" title="0">{
+        return &amp;DiscardHandler{}
+}</span>
+
+func (h *DiscardHandler) Handle(_ context.Context, _ slog.Record) error <span class="cov0" title="0">{
+        // Просто игнорируем запись журнала
+        return nil
+}</span>
+
+func (h *DiscardHandler) WithAttrs(_ []slog.Attr) slog.Handler <span class="cov0" title="0">{
+        // Возвращает тот же обработчик, так как нет атрибутов для сохранения
+        return h
+}</span>
+
+func (h *DiscardHandler) WithGroup(_ string) slog.Handler <span class="cov0" title="0">{
+        // Возвращает тот же обработчик, так как нет группы для сохранения
+        return h
+}</span>
+
+func (h *DiscardHandler) Enabled(_ context.Context, _ slog.Level) bool <span class="cov0" title="0">{
+        // Всегда возвращает false, так как запись журнала игнорируется
+        return false
+}</span>
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package slogpretty
+
+import (
+        "context"
+        "encoding/json"
+        "io"
+        stdLog "log"
+        "log/slog"
+
+        "github.com/fatih/color"
+)
+
+type PrettyHandlerOptions struct {
+        SlogOpts *slog.HandlerOptions
+}
+
+type PrettyHandler struct {
+        slog.Handler
+        l     *stdLog.Logger
+        attrs []slog.Attr
+}
+
+func (opts PrettyHandlerOptions) NewPrettyHandler(
+        out io.Writer,
+) *PrettyHandler <span class="cov0" title="0">{
+        h := &amp;PrettyHandler{
+                Handler: slog.NewJSONHandler(out, opts.SlogOpts),
+                l:       stdLog.New(out, "", 0),
+        }
+
+        return h
+}</span>
+
+func (h *PrettyHandler) Handle(_ context.Context, r slog.Record) error <span class="cov0" title="0">{
+        level := r.Level.String() + ":"
+
+        switch r.Level </span>{
+        case slog.LevelDebug:<span class="cov0" title="0">
+                level = color.MagentaString(level)</span>
+        case slog.LevelInfo:<span class="cov0" title="0">
+                level = color.BlueString(level)</span>
+        case slog.LevelWarn:<span class="cov0" title="0">
+                level = color.YellowString(level)</span>
+        case slog.LevelError:<span class="cov0" title="0">
+                level = color.RedString(level)</span>
+        }
+
+        <span class="cov0" title="0">fields := make(map[string]interface{}, r.NumAttrs())
+
+        r.Attrs(func(a slog.Attr) bool </span><span class="cov0" title="0">{
+                fields[a.Key] = a.Value.Any()
+
+                return true
+        }</span>)
+
+        <span class="cov0" title="0">for _, a := range h.attrs </span><span class="cov0" title="0">{
+                fields[a.Key] = a.Value.Any()
+        }</span>
+
+        <span class="cov0" title="0">var sbt []byte
+
+        var err error
+
+        if len(fields) &gt; 0 </span><span class="cov0" title="0">{
+                sbt, err = json.MarshalIndent(fields, "", "  ")
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov0" title="0">timeStr := r.Time.Format("[15:05:05.000]")
+        msg := color.CyanString(r.Message)
+
+        h.l.Println(
+                timeStr,
+                level,
+                msg,
+                color.WhiteString(string(sbt)),
+        )
+
+        return nil</span>
+}
+
+func (h *PrettyHandler) WithAttrs(attrs []slog.Attr) slog.Handler <span class="cov0" title="0">{
+        return &amp;PrettyHandler{
+                Handler: h.Handler,
+                l:       h.l,
+                attrs:   attrs,
+        }
+}</span>
+
+func (h *PrettyHandler) WithGroup(name string) slog.Handler <span class="cov0" title="0">{
+        return &amp;PrettyHandler{
+                Handler: h.Handler.WithGroup(name),
+                l:       h.l,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package logger
+
+import (
+        "log/slog"
+        "os"
+
+        "github.com/4uvirik/ProductService/pkg/logger/handler/slogpretty"
+)
+
+const (
+        envLocal = "local"
+        envDev   = "dev"
+        envProd  = "prod"
+)
+
+func ConfigLogger(logLevel string) (*slog.Logger, error) <span class="cov0" title="0">{
+        var log *slog.Logger
+
+        switch logLevel </span>{
+        case envLocal:<span class="cov0" title="0">
+                log = setupPrettySlog()</span>
+        case envDev:<span class="cov0" title="0">
+                log = slog.New(
+                        slog.NewJSONHandler(os.Stdout, &amp;slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}),
+                )</span>
+        case envProd:<span class="cov0" title="0">
+                log = slog.New(
+                        slog.NewJSONHandler(os.Stdout, &amp;slog.HandlerOptions{Level: slog.LevelInfo}),
+                )</span>
+        default:<span class="cov0" title="0">
+                log = slog.New(
+                        slog.NewJSONHandler(os.Stdout, &amp;slog.HandlerOptions{Level: slog.LevelInfo}),
+                )</span>
+        }
+
+        <span class="cov0" title="0">return log, nil</span>
+}
+
+func setupPrettySlog() *slog.Logger <span class="cov0" title="0">{
+        opts := slogpretty.PrettyHandlerOptions{
+                SlogOpts: &amp;slog.HandlerOptions{
+                        Level:     slog.LevelDebug,
+                        AddSource: true,
+                },
+        }
+
+        handler := opts.NewPrettyHandler(os.Stdout)
+
+        return slog.New(handler)
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package sl
+
+import (
+        "log/slog"
+)
+
+func Err(err error) slog.Attr <span class="cov0" title="0">{
+        return slog.Attr{
+                Key:   "error",
+                Value: slog.StringValue(err.Error()),
+        }
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

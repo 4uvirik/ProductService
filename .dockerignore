@@ -1,0 +1,11 @@
+.idea/
+.env
+vendor/
+.log
+tmp/
+*.tmp
+.out
+coverage.out
+coverage.html
+.gitignore
+.git
