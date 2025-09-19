@@ -8,7 +8,7 @@ import (
 
 // ProductOperations - операции хранилища для Product.
 type ProductOperations interface {
-	ProductCreate(ctx context.Context, p entity.Product) (*entity.Product, error)
+	ProductCreate(ctx context.Context, p *entity.Product) (*entity.Product, error)
 	ProductGetAll(ctx context.Context) ([]entity.Product, error)
 	ProductGetByID(ctx context.Context, id int) (*entity.Product, error)
 	ProductUpdate(ctx context.Context, p *entity.Product) error

@@ -35,7 +35,7 @@ func (u *ProductUseCase) ProductCreate(ctx context.Context, dto entity.ProductCr
 		CategoryID: dto.CategoryID,
 	}
 
-	return u.oper.ProductCreate(ctx, product)
+	return u.oper.ProductCreate(ctx, &product)
 }
 
 // ProductGetAll - метод вывода всех продуктов.
